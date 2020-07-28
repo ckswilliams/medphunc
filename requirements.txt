@@ -1,0 +1,16 @@
+pydicom
+pynetdicom
+scipy
+matplotlib
+pandas
+scikit-image
+scikit-learn
+opencv
+opencv-log
+astropy
+dicom2nifti
+nibabel
+xmltodict
+rdsr_navigator
+xlrd
+openpyxl
