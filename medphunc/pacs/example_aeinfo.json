@@ -1,0 +1,15 @@
+{"physicspc":{"aet":"MEDPHYS",
+"address":"172.27.26.65",
+"port":104},
+"dockerbox":{"aet":"MEDPHYS",
+"address":"192.168.56.101",
+"port":4242},
+"openrem":{"aet":"OPENREM",
+"address":"10.1.2.4",
+"port":104},
+"PACS":{"aet":"IMPAX",
+"address":"10.1.2.3",
+"port":104},
+"default":{"me":"physicspc",
+"remote":"PACS"}
+}
