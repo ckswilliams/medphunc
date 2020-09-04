@@ -42,6 +42,22 @@ def _get_all_fns(im_folder, seg_folder=None, output_folder=None):
 
 
 #%% Create images showing segmented regions, save to the cwd
+
+def save_segmentation_overlay(im_fn, seg_fn, output_fn, seg_value=666):
+    try:
+        n = nibabel.load(im_fn)
+        im = n.get_fdata().copy()
+        seg = nibabel.load(seg_fn).get_fdata()
+        if output_fn[-3:] not in ['.gz','nii']:
+            output_fn = output_fn+'.nii'
+        im[seg>0.5] = seg_value
+        out = nibabel.Nifti1Image(im, n.affine, n.header)
+        nibabel.save(out, output_fn)
+        logger.debug('Saved image at {im_fn} and segmentation {seg_fn} as {output_fn}')
+    except FileNotFoundError:
+        logger.error(f'Failed to parse {im_fn}, {seg_fn}, giving up')
+        pass
+    
     
 def save_segmentation_overlays(im_fns, seg_fns, output_fns, seg_value=666):
     """
@@ -64,22 +80,45 @@ def save_segmentation_overlays(im_fns, seg_fns, output_fns, seg_value=666):
     None.
 
     """
-    try:
-        for i, (ifn, sfn, ofn) in enumerate(zip(im_fns, seg_fns, output_fns)):
-        
-            n = nibabel.load(ifn)
-            im = n.get_fdata().copy()
-            seg = nibabel.load(sfn).get_fdata()
-            if ofn[-3:] not in ['.gz','nii']:
-                ofn = ofn+'.nii'
-            im[seg>0.5] = seg_value
-            out = nibabel.Nifti1Image(im, n.affine, n.header)
-            nibabel.save(out, ofn)
-            logger.debug('Saved image at {ifn} and segmentation {sfn} as {ofn}')
-    except FileNotFoundError:
-        logger.error(f'Failed to parse {ifn}, {sfn}, giving up')
-        pass
+    for i, (im_fn, seg_fn, output_fn) in enumerate(zip(im_fns, seg_fns, output_fns)):
+        save_segmentation_overlay(im_fn, seg_fn, output_fn)
 
+
+def save_segmentation_contour_overlay(im_fn, seg_fn, output_fn):
+    """
+    Write outline of contours to images and save to disk
+
+    Parameters
+    ----------
+    im_fns : list
+        list of filenames pointing to image files.
+    seg_fns : list
+        list of filenames pointing to segmentations, in the same order as im_fns.
+    output_fns : list
+        list of filenames to save, in the same order as the other inputs.
+        Should have the .tif suffix, and will override any other.
+
+    Returns
+    -------
+    None.
+
+    """
+    try:
+        n = nibabel.load(im_fn)
+        im = n.get_fdata().copy()
+        seg = nibabel.load(seg_fn).get_fdata()
+        if output_fn[-4:] not in ['.tif']:
+            output_fn = output_fn+'.tif'
+        #im = iu.apply_window(im, (300,80), unit_range=True)
+        out = iu.draw_object_contours_3d(im, seg, window_level=(300,80))
+        out = np.moveaxis(out, 2,0)
+        out = (out/out.max()*255).astype(np.int8)
+        imageio.volwrite(output_fn, out)
+        #export_tools.save_image_stack(out, output_fn)
+        logger.debug('Saved contour overlays as {output_fn}')
+    except FileNotFoundError as e:
+        logger.error(f'Failed to parse {im_fn}, {seg_fn}, giving up due to error {e}')
+        
 
 def save_segmentation_contour_overlays(im_fns, seg_fns, output_fns):
     """
@@ -100,23 +139,8 @@ def save_segmentation_contour_overlays(im_fns, seg_fns, output_fns):
     None.
 
     """
-    try:
-        for i, (ifn, sfn, ofn) in enumerate(zip(im_fns, seg_fns, output_fns)):
-        
-            n = nibabel.load(ifn)
-            im = n.get_fdata().copy()
-            seg = nibabel.load(sfn).get_fdata()
-            if ofn[-4:] not in ['.tif']:
-                ofn = ofn+'.tif'
-            iu.apply_window(im, (300,80), unit_range=True)
-            out = iu.draw_object_contours_3d(im, seg)
-            imageio.volwrite(ofn, out)
-            #export_tools.save_image_stack(out, ofn)
-            logger.debug('Saved contour overlays as {ofn}')
-    except FileNotFoundError:
-        logger.error(f'Failed to parse {ifn}, {sfn}, giving up')
-        pass  
-
+    for i, (im_fn, seg_fn, output_fn) in enumerate(zip(im_fns, seg_fns, output_fns)):
+        save_segmentation_contour_overlay(im_fn, seg_fn, output_fn)
 
 #%% Show all images 
 def show_all_slices(im):
@@ -175,6 +199,9 @@ def folder_to_overlays(im_folder, seg_folder=None, output_folder=None):
     im_fns, seg_fns, output_fns = _get_all_fns(im_folder, seg_folder, output_folder)
     save_segmentation_overlays(im_fns, seg_fns, output_fns)
     
+def folder_to_contour_overlays(im_folder, seg_folder, output_folder):
+    im_fns, seg_fns, output_fns = _get_all_fns(im_folder, seg_folder, output_folder)
+    save_segmentation_contour_overlays(im_fns, seg_fns, output_fns)
 
 def folder_to_segmented_pixel_data(im_folder, seg_folder):
     im_fns, seg_fns, __ = _get_all_fns(im_folder, seg_folder)
@@ -192,7 +219,33 @@ if __name__ == '__main__':
     #seg_folder='C:/shared/Projects/nnUNet/nnunet/nnUNet_base/nnUNet_raw/liverseg/imagesTs/labelled'
     #output_folder = 'C:/shared/Projects/nnUNet/nnunet/nnUNet_base/nnUNet_raw/liverseg/imagesTs'
     
-    im_folder= 'C:/shared/niftidump/kub/ax'
-    seg_folder='C:/shared/niftidump/kub/ax/labels'
+    im_folder= 'c:/shared/Projects/liver_segmentation/data/austin_data/'
+    seg_folder='c:/shared/Projects/liver_segmentation/data/austin_data/labels'
+    output_folder = 'c:/shared/Projects/liver_segmentation/data/austin_data/new_overlays'
     output_folder = None
     
+
+    
+    im_fns, seg_fns, __ = _get_all_fns(im_folder, seg_folder)
+    ifn = im_fns[0]
+    sfn = seg_fns[0]
+    ofn = 'test_overlay.tif'
+    
+    save_segmentation_contour_overlay(ifn, sfn, ofn)
+    
+    
+    jt_im_folder  = r'\\RADIOL088919W\shared\Projects\liver_segmentation\Pazhitnykh 2017 3D Lung Segmentation (U-NET)\Segdata\im'
+    jt_seg_folder = r'\\RADIOL088919W\shared\Projects\liver_segmentation\Pazhitnykh 2017 3D Lung Segmentation (U-NET)\Segdata\mask'
+    jt_output_folder = r'\\RADIOL088919W\shared\Projects\liver_segmentation\Pazhitnykh 2017 3D Lung Segmentation (U-NET)\Segdata\output'
+    
+    jt_im_fns = glob.glob(jt_im_folder+'/*.nii')
+    patient_ids = [fn.split('patient')[1].split('_0000')[0] for fn in jt_im_fns]
+    jt_seg_fns = [jt_seg_folder +f'/patient{patient_id}_0000_mask.nii' for patient_id in patient_ids]
+    jt_output_fns = [jt_output_folder +f'/patient{patient_id}_0000_overlay.nii' for patient_id in patient_ids]
+    
+    save_segmentation_contour_overlays(jt_im_fns, jt_seg_fns, jt_output_fns)
+    
+
+    
+
+

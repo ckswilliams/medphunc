@@ -113,15 +113,22 @@ def draw_object_contours_3d(im, seg, window_level = (300,80), **kwargs):
         draw = drawstack[:,:,k,:].copy()
         s = seg[:,:,k]
         try:
+            
             draw = draw_object_contours(draw, s, **kwargs)
-        except:
-            pass
+        except Exception as e:
+            print(e)
         drawstack[:,:,k,:] = draw
     
     cim = im.reshape((*im.shape,1))
     cim = np.repeat(cim,3,axis=3)
-    cim = apply_window(cim, window_level)
-    tcim = cim + drawstack//255
+    cim = apply_window(cim, window_level, unit_range=True)
+    drawmask = drawstack.sum(axis=3) > 0.5
+    drawmask = drawmask[:,:,:,np.newaxis]
+    drawmask = drawmask.repeat(3,axis=3)
+    tcim = cim.copy()
+    tcim[drawmask] = 0
+    tcim = tcim + drawstack/255
+    
     return tcim
 
 def localise_segmented_object(seg):

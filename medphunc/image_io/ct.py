@@ -99,7 +99,10 @@ def load_ct_folder(folder, return_tags='middle'):
     
     #Rescale the metadata according to the intercept
     img3d = rescale_ct_image(img3d, files[0].RescaleSlope, files[0].RescaleIntercept)
-        
+    
+    p0 = np.array(slices[0].ImagePositionPatient)
+    p1 = np.array(slices[-1].ImagePositionPatient)
+    
     if return_tags == 'middle':
         return_d = slices[len(slices)//2]
     elif return_tags == 'first':
@@ -110,7 +113,7 @@ def load_ct_folder(folder, return_tags='middle'):
         raise(ValueError("return_tag not in ['middle', 'first','last']"))
     
     # Return the 3d array, and a dicom file for extracting metadata
-    return img3d, return_d
+    return img3d, return_d, (p0[::-1], p1[::-1])
 
 if __name__ == '__main__':
     folder = sys.argv[0]

@@ -44,8 +44,89 @@ import cv2
 import numpy as np
 import math
 import pydicom
+from medphunc.misc import ssde
+from medphunc.image_io import ct
+
+import logging
+logger = logging.getLogger(__name__)
 
 
+
+#%% Class refactor
+class wed:
+    """
+    Calculate WED from either a single image, or a CT image stack.
+    
+    The method from_folder() should be used for loading a folder of CT images
+    
+    
+    """
+    wed = None
+    ssde = None
+    wed_results = {}
+    im = None
+    scale = None
+    threshold = None
+    window = None
+    region = None
+    
+    def __init__(self, im, scale, threshold=-300, window=False, region='body'):
+        self.im = im
+        self.scale=scale
+        self.threshold=threshold
+        self.window=window
+        self.region=region
+        self.calculate_wed()
+        self.calculate_ssde()
+
+    
+    @classmethod
+    def from_image(cls, im, scale, threshold=-300, window=False, region='body'):
+        return cls(im, scale, threshold, window, region)
+        
+    @classmethod
+    def from_folder(cls, folder, threshold=-300, region=None):
+        vol, dcm, end_points = ct.load_ct_folder(folder)
+        im = vol[vol.shape[0]//2,]
+        dcm = dcm
+        scale = dcm.PixelSpacing[0]*dcm.PixelSpacing[1]
+        threshold = threshold
+        try:
+            window = (dcm.WindowWidth[0], dcm.WindowCenter[0])
+            
+        except TypeError:
+            window = (80,300)
+        
+        if region is None:
+            try:
+                if 'Body' in dcm.CTDIPhantomTypeCodeSequence[0].CodeMeaning:
+                    region = 'body'
+                elif 'Head' in dcm.CTDIPhantomTypeCodeSequence[0].CodeMeaning:
+                    region='head'
+            except AttributeError:
+                if dcm.BodyPartExamined == 'HEAD':
+                    region='head'
+                else:
+                    region='body'
+                    logger.warning('region not found in dicom and not provided manually - assumed body phantom')
+        elif region not in ['body', 'head']:
+            raise(ValueError(f'region must be one of [body,head], {region} was passed'))
+        c = cls(im, scale, threshold, window, region)
+        c.dcm = dcm
+        return c
+    
+    
+    def calculate_wed(self):
+        self.wed_results = wed_from_image(self.im, self.scale, self.threshold, self.window)
+        self.wed = self.wed_results['water_equiv_circle_diam']/10
+    
+    
+    def calculate_ssde(self):
+        self.ssde = ssde.ssde_from_wed(self.wed_results['water_equiv_circle_diam']/10, self.region)
+                  
+    def __repr__(self):
+        return f'Water equivalent diameter calculations \nWED: {self.wed} cm\nSSDE: {self.ssde.iloc[0]}'
+    
 def wed_from_image(im, scale, threshold = -300, window = False):
     '''
     Calculate the water equivalent diameter from a CT image.
@@ -73,34 +154,39 @@ def wed_from_image(im, scale, threshold = -300, window = False):
 
     '''
     # map ww/wl for contour detection (filter_img)
-    thresh = ((dicom_img > threshold)*255).astype(np.uint8)
+    thresh = ((im > threshold)*255).astype(np.uint8)
 
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     # calculate area and equivalent circle diameter for the largest contour (assumed to be the patient without table or clothing)
+    # Assume scale is in mm2
     contour = max(contours, key=lambda a: cv2.contourArea(a))
     area = cv2.contourArea(contour) * scale
     equiv_circle_diam = 2.0*math.sqrt(area/math.pi)
 
     hull = cv2.convexHull(contour)
     hullarea = cv2.contourArea(hull) * scale
-    hullequiv = 2.0*math.sqrt(hullarea/math.pi)
+    hullequiv = 2.0*(hullarea/math.pi)**0.5
 
     # create mask of largest contour
-    mask_img = np.zeros((dicom_img.shape), np.uint8)
+    mask_img = np.zeros((im.shape), np.uint8)
     cv2.drawContours(mask_img,[contour],0,255,-1)
 
     # calculate mean HU of mask area
-    roi_mean_hu = cv2.mean(dicom_img, mask=mask_img)[0]
+    roi_mean_hu = cv2.mean(im, mask=mask_img)[0]
+
+    
+
 
     # calculate water equivalent area (Aw) and water equivalent circle diameter (Dw)
+    # 
     water_equiv_area = 0.001 * roi_mean_hu * area + area
     water_equiv_circle_diam = 2.0 * math.sqrt(water_equiv_area/math.pi)
 
     if window:
         # map ww/wl to human-viewable image (view_img)
         remap = lambda t: 255.0 * (1.0 * t - (window[1] - 0.5 * window[0])) / window[0] # create LUT function; window[0]: ww, window[1]: wl
-        view_img = np.array([remap(row) for row in dicom_img]) # rescale
+        view_img = np.array([remap(row) for row in im]) # rescale
         view_img = np.clip(view_img, 0, 255) # limit to 8 bit
         view_img = view_img.astype(np.uint8) # set color depth
         view_img = cv2.cvtColor(view_img, cv2.COLOR_GRAY2RGB) # add RBG channels
@@ -171,13 +257,13 @@ def wed_from_dicom(dicom_pydicom, threshold = -300, window = False):
 
     '''
 
-    dicom_img = dicom_pydicom.pixel_array # dicom pixel values as 2D numpy pixel array
-    dicom_img = dicom_img - 1000.0 # remap scale 0:... to HU -1000:...
+    im = dicom_pydicom.pixel_array # dicom pixel values as 2D numpy pixel array
+    im = im - 1000.0 # remap scale 0:... to HU -1000:...
 
     # determine pixel area in mm²/px²
     scale = dicom_pydicom.PixelSpacing[0] * dicom_pydicom.PixelSpacing[1]
     
-    return wed_from_img(dicom_img, scale, threshold, window)
+    return wed_from_image(im, scale, threshold, window)
 
 def get_wed(dicom):
     '''input agnostic wrapping function that returns only WED'''
@@ -187,6 +273,8 @@ def get_wed(dicom):
     output = wed_from_dicom(d)
     wed = output['water_equiv_circle_diam']
     return wed
+
+#%%
 
 if __name__ == "__main__":
 
