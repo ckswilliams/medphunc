@@ -10,6 +10,11 @@ import pydicom
 import numpy as np
 import sys
 import glob
+from collections import Counter
+
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def rescale_ct_image(im, rescale_slope, rescale_intercept):
@@ -51,28 +56,39 @@ def load_ct_folder(folder, return_tags='middle'):
     
     # load the DICOM files
     files = []
-    print('glob: {}'.format(folder))
+    logger.info('glob: {}'.format(folder))
     for fname in glob.glob(folder+'*', recursive=False):
-        print("loading: {}".format(fname))
+        logger.debug("loading: {}".format(fname))
         files.append(pydicom.read_file(fname))
     
-    print("file count: {}".format(len(files)))
+    logger.info("file count: {}".format(len(files)))
     
     # skip files with no SliceLocation (eg scout views)
     slices = []
     skipcount = 0
     for f in files:
-        if hasattr(f, 'InstanceNumber'):
+        if hasattr(f, 'InstanceNumber') and hasattr(f, 'PixelData'):
             slices.append(f)
         else:
             skipcount = skipcount + 1
     
-    print("skipped, no SliceLocation: {}".format(skipcount))
+    if len(slices) == 0:
+        raise(FileNotFoundError('No dicom image files found in '+folder))
+    
+    logger.info("skipped, no SliceLocation: {}".format(skipcount))
+    
+  
+    #get most frequent pixel array shape for all slices
+    img_shapes = [s.pixel_array.shape for s in slices]
+    c = Counter(img_shapes)
+    img_2d_shape = c.most_common()[0][0]
+      
+    #Drop anything  with a different array size to most common
+    slices = [s for s in slices if s.pixel_array.shape==img_2d_shape]
     
     # ensure they are in the correct order
     slices = sorted(slices, key=lambda s: (s.SeriesInstanceUID, s.SliceThickness, int(s.InstanceNumber)))
-    
-    
+
     
     # pixel aspects, assuming all slices are the same
     ps = slices[0].PixelSpacing
@@ -81,28 +97,23 @@ def load_ct_folder(folder, return_tags='middle'):
     sag_aspect = ps[1]/ss
     cor_aspect = ss/ps[0]
     
+
+    
     # create 3D array
-    img_shape = list(slices[0].pixel_array.shape)
-    img_shape.append(len(slices))
+    img_shape = (len(slices), *img_2d_shape)
     img3d = np.zeros(img_shape)
     
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
         img2d = s.pixel_array
-        if img2d.shape == img3d.shape[:2]:
-            img3d[:, :, i] = img2d
+        if img2d.shape == img_2d_shape:
+            img3d[i, :, :] = img2d
         else:
-            print('found file with wrong pixel array size, skipping')
-    
-    #Rearrange so that axis order is [z,y,x]
-    img3d = np.moveaxis(img3d, 2, 0)
-    
+            logger.debug('found file with wrong pixel array size, skipping')
+        
     #Rescale the metadata according to the intercept
     img3d = rescale_ct_image(img3d, files[0].RescaleSlope, files[0].RescaleIntercept)
-    
-    p0 = np.array(slices[0].ImagePositionPatient)
-    p1 = np.array(slices[-1].ImagePositionPatient)
-    
+        
     if return_tags == 'middle':
         return_d = slices[len(slices)//2]
     elif return_tags == 'first':
@@ -112,8 +123,13 @@ def load_ct_folder(folder, return_tags='middle'):
     else:
         raise(ValueError("return_tag not in ['middle', 'first','last']"))
     
+    #Get the end points 
+    start_point = np.array(slices[0].ImagePositionPatient)[::-1]
+    end_point = np.array(slices[-1].ImagePositionPatient)[::-1]
+    
+    
     # Return the 3d array, and a dicom file for extracting metadata
-    return img3d, return_d, (p0[::-1], p1[::-1])
+    return img3d, return_d, (start_point, end_point)
 
 if __name__ == '__main__':
     folder = sys.argv[0]
