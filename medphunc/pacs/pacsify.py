@@ -166,7 +166,7 @@ def do_find(d):
 
 def do_move(d):
     """
-    Send move query using the supplied dataset
+    Send move query using the supplied dataset.
 
     Parameters
     ----------
@@ -189,7 +189,7 @@ def do_move(d):
 
 def dfind(d):
     """
-    Send search query using the supplied dataset, returning a pandas dataframe
+    Send search query using the supplied dataset, returning a pandas dataframe.
 
     Parameters
     ----------
@@ -321,6 +321,7 @@ class SearchSet(pydicom.Dataset):
             #Optional
             self.PatientName = ''
             self.PatientID = ''
+            self.PatientBirthDate = ''
             self.AccessionNumber = ''
             self.StudyDescription = ''
             self.StudyID = ''
@@ -512,23 +513,20 @@ class RDSR(SearchSet):
                 #siemens artis
                 rdsr_series_uid = self.result.loc[self.result.Modality=='SR'].SeriesInstanceUID.iloc[0]
             except ValueError:
+                print('No SRs in study, move failed')
                 return
             series_mover = self.copy()
             series_mover.SeriesInstanceUID = rdsr_series_uid
             return series_mover.move()
             
-#%%
-            
-    def __init__(self, study_uid):
-        pass
     
     @classmethod
     def from_accession(cls, accession_number):
-        d = make_dataset()
+        return cls('study', AccessionNumber=accession_number)
 
     @classmethod
     def from_study_uid(cls, study_uid):
-        cls(study_uid)
+        return cls('study', StudyInstanceUID=study_uid)
 
 def find_rdsr_series_from_study_uid(study_uid):
     d = make_dataset('series', StudyInstanceUID = study_uid)
