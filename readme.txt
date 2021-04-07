@@ -10,13 +10,9 @@ Feedback and bug reports are desirable, but should be met with no expectation of
 
 I recommend that these scripts are used with an anaconda distribution.
 To set up an anaconda environment from scratch that is compatible with this package, start with something like the following:
-This will probably not be kept up to date.
 
-conda create -n medph python=3.7
+conda config --add channels conda-forge
+conda create --name medph python=3.6 numpy pandas gdcm dicom2nifti jpeg nibabel opencv spyder scikit-image scikit-learn astropy lxml openpyxl xlrd spyder
 conda activate medph
-conda install numpy pandas pydicom 
-conda install -c conda-forge gdcm dicom2nifti jpeg nibabel opencv
-conda install spyder
-pip install rdsr-navigator pydicom pynetdicom opencv-log lxml
-
+pip install rdsr-navigator pynetdicom
 
