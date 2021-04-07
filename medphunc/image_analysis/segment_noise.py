@@ -31,8 +31,6 @@ logger = logging.getLogger(__name__)
 
 class Segmenter:
     
-    
-    
     data = {'tissue':{'threshold':(-30,30)},
             'bone':{'threshold':(200,2500)}
             }
@@ -71,7 +69,7 @@ class Segmenter:
 
     @classmethod
     def from_ct_folder(cls, folder, z = 'all'):
-        im, d = load_ct_folder(folder)
+        im, d, end_points = load_ct_folder(folder)
         return cls(im, z)
         
     @classmethod
@@ -86,8 +84,6 @@ class Segmenter:
     @classmethod
     def from_image_stack(cls, imstack, z = 'all'):
         return cls(imstack, z)
-
-    
 
 
     def generate_masks(self):
@@ -110,14 +106,14 @@ class Segmenter:
 
     def calculate_signal(self):
         for region, region_data in self.data.items():
-            mask = self.masks[region]
+            mask = self.data[region]['mask']
             vals = self.im[mask]
             self.data[region]['HU'] = scipy.stats.mode(vals).mode.mean()
         
 
     def calculate_noise(self):
         for region, region_data in self.data.items():
-            mask = self.masks[region]
+            mask = self.data[region]['mask']
             std_vals = self.im_std[mask]
             z = np.histogram(std_vals,
                              bins=200,
@@ -129,20 +125,20 @@ class Segmenter:
             if std_mode == 0:
                 logger.error('Calculated a standard deviation of 0, which is not plausible')
 
-
-    def results(self):
+    def calculate_results(self):
         self.generate_masks()
         self.generate_std_map()
         self.calculate_noise()
         self.calculate_signal()
+        results = pd.DataFrame(self.data).T
+        self.results = results.drop(columns='mask')
+        return self.results
         
-        return pd.DataFrame(self.data).T
-                
+
 
 #%%
 
 class HeadNoise(Segmenter):
-    
     
     data = {}
     
@@ -150,10 +146,11 @@ class HeadNoise(Segmenter):
                  im,
                  z_input = 'all'):
         self.im = im
-        self.z = self.set_z(z_input)
+        self.set_z(z_input)
         self.im = self.im[self.z,]
         self.segment_brain()
-    
+        self.calculate_results()
+        
     def segment_brain(self, threshold=200):
         
         masks = []
@@ -164,17 +161,19 @@ class HeadNoise(Segmenter):
             inner_mask = binary_opening(inner_mask, iterations=24)
             inner_mask = binary_erosion(inner_mask, iterations=30)
             masks.append(inner_mask)
+        mask = np.array(masks)
+        if mask.sum() == 0:
+            raise(ValueError("The segmentation of the image supplied contained was empty"))
         self.data['brain'] = {}
-        self.data['brain']['mask'] = np.array(masks)
-
+        self.data['brain']['mask'] = mask
 
 #%%
 
 def segment_head_to_inner_brain(im, threshold=200):
     mask = im > threshold
     inner_mask = binary_fill_holes(mask) ^ mask
-    inner_mask = binary_opening(inner_mask, iterations=24)
-    inner_mask = binary_erosion(inner_mask, iterations=30)
+    inner_mask = binary_opening(inner_mask, iterations=12)
+    inner_mask = binary_erosion(inner_mask, iterations=18)
     return inner_mask
     
     
@@ -184,7 +183,6 @@ def calculate_head_noise_mode_from_image(im, threshold=200, window_diameter=20):
     
     im_std = window_std(im, window_diameter)
 
-    #
     std_vals = im_std[inner_mask]
     
     #bin the pixel values, then find the most common bin
@@ -193,7 +191,6 @@ def calculate_head_noise_mode_from_image(im, threshold=200, window_diameter=20):
     if std_mode == 0:
         logger.error('Calculated a standard deviation of 0, which is not plausible')
     return std_mode
-    
 
 def calculate_head_noise_mode_from_dicom(d, threshold=200, window_diameter=20):
     '''
