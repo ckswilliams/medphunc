@@ -15,9 +15,11 @@ import win32com.client
 from tkinter.filedialog import askopenfilename
 
 #%% Calculate via effective dose
-#todo what is the paper name?
+#In accordance with, I believe, RPS 8:
+# Ultiamtely sourced from (maybe): Estimates of late radiation risks to the UK  population.  Documents  of  the  NRPB  4(4),  1993:  Table  4.8:    Estimates  of  radiation-induced fatal cancer risks in a UK population
 
 # polynomial coefficients for risk as a function of age
+
 inc_f =  np.array([	4.27E-09,	-9.44E-07,	7.52E-05,	-2.72E-03,	4.70E-02])
 inc_m  = np.array([ 	2.34E-09,	-5.26E-07,	4.13E-05,	-1.43E-03,	2.52E-02])
 mort_f = np.array([	8.69E-10,	-2.32E-07,	2.11E-05,	-8.40E-04,	1.75E-02])
@@ -167,8 +169,6 @@ class Risk:
     def __repr__(self):
         return str(self.calculate_odds())
 
-r = Risk([50,80], 'a')
-print(r)
 
 #%% Organ import functions
 
@@ -306,14 +306,14 @@ class OrganRisk(Risk):
 
 #fns =['M:/MedPhy/General/^Ethics/2020/5-MAY/ATG-017-001_EAC_x/CT-Expo v2.5 (E).xls']
 #o = OrganRisk.combine_ct_expo_workbooks(fns)
-o = OrganRisk(tt,[30,40])
-print(o)
+# o = OrganRisk(tt,[30,40])
+# print(o)
 
 
 #%% BEIR VII organ dose method
 
 
-
+#BEIR VII Table 12D-1
 class BEIR(OrganRisk):
     
     mdat=pd.DataFrame({'Age':[0,5,10,15,20,30,40,50,60,70,80],
@@ -360,38 +360,28 @@ class BEIR(OrganRisk):
             pass
         self.risk = pd.concat(risks,axis=1)
 
-b=BEIR(tt,[30,50])   
-print(b)
+# b=BEIR(tt,[30,50])   
+# print(b)
 
-bb = BEIR.from_pcxmc(male_fns = [fn])
-print(bb)
+# bb = BEIR.from_pcxmc(male_fns = [fn])
+# print(bb)
 
-bb.individual_risk(55,'m',1)
+# bb.individual_risk(55,'m',1)
 
 #%%
 
     
-    def select_ct_expo_spreadsheet(text):
-        fn = askopenfilename(title=text)
-        #fn = 'C:/Users/WilliamCh/Desktop/research risk assesment for RB/CT-Expo v2.5 rb ATLAS.xls'
-        return fn
-    
+def select_ct_expo_spreadsheet(text):
+    fn = askopenfilename(title=text)
+    #fn = 'C:/Users/WilliamCh/Desktop/research risk assesment for RB/CT-Expo v2.5 rb ATLAS.xls'
+    return fn
+
 
     
 def float_formatter(x):
     return '1 in %s' % ('%d' % float('%.2g' % x))
         
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     
 #%%
     
