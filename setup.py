@@ -6,4 +6,6 @@ setup(
     version='0.1.0',
     description='Conglomerated scripts and functions for use in diagnostic imaging medical physics',
     packages=find_packages(),
+    package_data={'medphunc': ['misc/*.csv', 'pacs/*.json']},
+    include_package_data=True
 )
