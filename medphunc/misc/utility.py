@@ -75,3 +75,63 @@ def search_combine_results(col:pd.Series, search_terms:list) -> pd.DataFrame:
     
     combined_results = results.apply(lambda x: x[~x.isna()].head(1), axis=1)
     return combined_results
+
+
+
+def convert_unit(unit):
+    unit_ref={'':1,
+       'm':0.001,
+       'c':0.01}
+    return unit.map(unit_ref)
+
+def split_units(unit_strings, seps):
+    """
+    Split a string into units, retrieving the magnitude prefix from each component
+
+    Parameters
+    ----------
+    units : TYPE
+        DESCRIPTION.
+    *seps : list of lists
+        Each sep should be 3 parts:
+            
+            search from left to right.
+
+    Returns
+    -------
+    None.
+
+    """
+    output = []
+    leftover = pd.Series(unit_strings)
+    for sep in seps:
+        # Workaround because rsplit wasn't matching my regex properly
+        # problem regex: Gy\.{0,1}
+        split = leftover.str.split(sep)
+        output.append(split.str[:-1].str.join(sep=sep))
+        leftover = split.str[-1]
+    return output
+
+    
+
+def dap_unit_conversion(dap_unit, preferred_unit='Gym2'):
+    input_units = split_units(dap_unit, ['Gy\.{0,1}','m'])
+    input_magnitudes = [convert_unit(u) for u in input_units]
+    input_mult = input_magnitudes[0]*input_magnitudes[1]**2
+    
+    pref_units = split_units(preferred_unit, ['Gy\.{0,1}','m'])
+    pref_magnitudes = [convert_unit(u) for u in pref_units]
+    pref_mult = (pref_magnitudes[0]*pref_magnitudes[1]**2)[0]
+    
+
+    return input_mult/pref_mult
+
+def dose_unit_conversion(dose_unit, preferred_unit='mGy'):
+    input_units = split_units(dose_unit, ['Gy'])
+    input_magnitudes = [convert_unit(u) for u in input_units]
+    input_mult = input_magnitudes[0]
+    
+    pref_units = split_units(preferred_unit, ['Gy'])
+    pref_magnitudes = [convert_unit(u) for u in pref_units]
+    pref_mult = pref_magnitudes[0][0]
+    return input_mult/pref_mult
