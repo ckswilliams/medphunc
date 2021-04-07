@@ -12,6 +12,8 @@ import numpy as np
 
 from scipy.ndimage import binary_fill_holes, morphology, binary_opening, binary_closing, binary_erosion, binary_dilation
 from scipy.signal import wiener
+from scipy import ndimage
+from scipy import spatial
 from matplotlib import pyplot as plt
 import scipy
 from skimage import measure
@@ -342,7 +344,7 @@ def calculate_radial_average(im, pixel_size):
 
 #%% Window functions
 
-def apply_window(im, window_level=False,
+def apply_window(im, window_level=None,
                  unit_range=True):
     """
     Apply a windowing function to an image array.
@@ -351,9 +353,10 @@ def apply_window(im, window_level=False,
     ----------
     im : np.array
         any numpy array, but an image is preferred.
-    window_level : tuple, optional
+    window_level : str or tuple, optional
         Set the window width and window centre in two ints. The default is False.
         Useful values for CT may be (300,120).
+        
     unit_range : boolean, optional
         scale down to a range from 0 to 1. The default is True.
 
@@ -363,10 +366,33 @@ def apply_window(im, window_level=False,
         a nice windowed image array.
 
     """
-    if not window_level:
+    window_lookup = {
+   # head and neck
+        'brain': (80, 40),
+        'subdural': (200, 75),
+        'stroke': (8, 32),
+        'stroke wide': (40, 40),
+        'temporal bones': (2800, 600),
+        'soft tissues': (400, 30),
+   # chest
+        'lungs': (1500, -600),
+        'mediastinum': (350, 50),
+   # abdomen
+        'soft tissues': (400, 50),
+        'liver': (150, 30),
+   # spine
+        'spine soft tissues': (250, 50),
+        'spine bone': (1800, 400)
+        }
+    
+    if window_level is None:
         level = (im.max() + im.min())/2
         window = (im.max() - im.min())/2
-    else: 
+    elif type(window_level) is str:
+        window_level = window_lookup[window_level]
+        window = window_level[0]
+        level = window_level[1]
+    else:
         window = window_level[0]
         level = window_level[1]
     im = (im - level)/window
@@ -374,6 +400,8 @@ def apply_window(im, window_level=False,
     im[im > 1] = 1
     if unit_range:
         im = (im+1) / 2
+    else:
+        im = im*window + level
     return im
 
 
