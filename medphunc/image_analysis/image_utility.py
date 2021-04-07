@@ -584,7 +584,7 @@ def plot_mtf(MTF_results, plot_name = ''):
     fig.show()
     return fig
 
-def mtf_from_lsf(lsf):
+def mtf_from_lsf(lsf, axis=-1):
     """
     Take the FT of a LSF to generate an MTF
     
@@ -592,20 +592,35 @@ def mtf_from_lsf(lsf):
         lsf
 
     Returns:
-        One dimensional FFT
+        One dimensional FFT, or array of 1d FFTs
     """
-    MTF = np.abs(np.fft.fft(lsf))
-    MTF = MTF[0:int(len(MTF)/2)]
-    return MTF
+    mtf = np.abs(np.fft.fft(lsf, axis=axis))
+    mtf = np.split(mtf, 2, axis=axis)
+    return mtf
 
-def mtf_from_esf(esf):
+def mtf_from_esf(esf, axis=-1):
     '''
-    Convert an Edge Spread Function to an MTF
+    Convert an Edge Spread Function (or series of ESFs to an MTF(s))
+    
+    
     '''
     
-    lsf = np.gradient(esf)
-    mtf = mtf_from_lsf(lsf)
+    lsf = np.gradient(esf, axis=axis)
+    mtf = mtf_from_lsf(lsf, axis=axis)[0]
     return mtf
+
+
+def profile_line(image, start_coords, end_coords, *,
+                 spacing=1, order=0, endpoint=True):
+    coords = []
+    n_points = int(np.ceil(spatial.distance.euclidean(start_coords, end_coords)
+                           / spacing))
+    for s, e in zip(start_coords, end_coords):
+        coords.append(np.linspace(s, e, n_points, endpoint=endpoint))
+    profile = ndimage.map_coordinates(image, coords, order=order)
+    return profile
+
+
 
 
 def get_values_around_cutoff(x, y, cutoff):
@@ -638,7 +653,11 @@ def window_variance(img, window_length):
 
     wmean, wsqrmean = (cv2.boxFilter(x, -1, (window_length, window_length),
     borderType=cv2.BORDER_REFLECT) for x in (img, img*img))
-    return wsqrmean - wmean*wmean
+    var = wsqrmean - wmean*wmean
+    var[var<0] = 0
+    return var
 
 def window_std(img, window_length):
     return np.sqrt(window_variance(img, window_length))
+
+
