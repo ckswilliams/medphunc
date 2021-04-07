@@ -78,3 +78,27 @@ def find_best_series_match(test_series,
 
 
 
+def test_study_date_within_window(test_series, reference_date, date_window=1):
+    ref_date = pd.to_datetime(reference_date)
+    test_series = pd.to_datetime(test_series)
+    day_delta = test_series-ref_date
+    day_delta = day_delta.dt.total_seconds().abs()/60/60/24
+    return day_delta < date_window
+    
+    
+
+def best_result_match(pacs_find_result, reference_date=None, date_window=1, study_description_search_terms=None):
+
+    if reference_date is not None:
+        studies_in_window = test_study_date_within_window(pacs_find_result.StudyDate,
+                                                          reference_date, date_window)
+        pacs_find_result = pacs_find_result.loc[studies_in_window,:]
+        
+    if study_description_search_terms is not None:
+        search_match = find_best_series_match(
+            pacs_find_result.StudyDescription, study_description_search_terms)
+        pacs_find_result = pacs_find_result.loc[search_match[0]]
+    
+    return pacs_find_result
+    
+    
