@@ -203,7 +203,10 @@ def dfind(d):
     """
     x = do_find(d)
     if len(x) == 1:
-        raise(Exception(x[0][0]))
+        if x[0][0].Status==0:
+            return pd.DataFrame()
+        else:
+            raise(ValueError(x[0][0]))
     else:
         return query_results_to_dataframe(x)
 
