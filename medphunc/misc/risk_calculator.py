@@ -103,6 +103,11 @@ class Risk:
         self.calculate_risk()
         if gender == 'a':
             self.combine_risks()
+        elif gender == 'm':
+            self.risk = self.risk.loc[:,'male']
+        elif gender == 'f':
+            self.risk = self.risk.loc[:,'female']
+        self.calculate_odds()
         self.risk = self.risk.loc[(self.risk.index >= self.age_range[0]) & 
                                   (self.risk.index <= self.age_range[1]),:]
 
@@ -115,6 +120,7 @@ class Risk:
 
     def calculate_risk(self):
         "Method for calculating risk that should be overwritten"
+        raise(ValueError('This class needs to be extended with a valid risk calulation method before use'))
         self.risk.male = 0.1
         self.risk.female = 0.2
     
@@ -133,6 +139,12 @@ class Risk:
         odds.columns = odds.columns.str.title() + ' risk'
         self.odds = odds.applymap(float_formatter)
         return self.odds
+    
+    def calculate_cohort_odds(self):
+        if self.gender == 'a':
+            return float_formatter(1/self.risk["average"].mean())
+        else:
+            return float_formatter(1/self.risk.iloc[:,0].mean())
     
     def individual_risk_interactive(self):
         patient_age = int(input('Input patient age: '))
@@ -369,6 +381,51 @@ class BEIR(OrganRisk):
 # bb.individual_risk(55,'m',1)
 
 #%%
+
+
+class RPS8Risk(Risk):
+
+    risk_tables = {
+        'incidence':{
+            'female':np.array([	4.27E-09,-9.44E-07,	7.52E-05,-2.72E-03,	4.70E-02]),
+            'male':np.array([ 2.34E-09,-5.26E-07,	4.13E-05,-1.43E-03,	2.52E-02])},
+        'mortality':{
+            'female':np.array([	8.69E-10,-2.32E-07,	2.11E-05,-8.40E-04,	1.75E-02]),
+            'male':np.array([	4.68E-10,-1.35E-07,	1.25E-05,-4.94E-04,	1.09E-02])}
+        }
+    risk_metric = 'incidence'
+
+    def __init__(self, effective_dose, age_range, gender='a', risk_metric='incidence'):
+        self.risk_metric = risk_metric
+        self.effective_dose = effective_dose
+        super().__init__(age_range, gender)
+    
+
+    def calculate_risk(self):
+
+        ages = np.arange(self.age_range[0], self.age_range[1]+1, 5,  )
+        risk_table = self.risk_tables[self.risk_metric]
+        f_risks = self.get_risk(self.effective_dose, ages, risk_table['female'])
+        m_risks = self.get_risk(self.effective_dose, ages, risk_table['male'])
+        self.risk = pd.DataFrame({'female':f_risks,'male':m_risks}, index=ages)
+        
+
+    @staticmethod
+    def get_risk(dose, age, risk_coef):
+        p1 = np.poly1d(risk_coef)
+        return p1(age)*dose/100
+    
+    @staticmethod
+    def get_risk_string(dose, age, risk_coef):
+        r = get_risk(dose, age, risk_coef)
+        rr = round_to_2(1/r)
+        return '1:%s' % ('%d' % rr)
+
+
+
+#%%
+
+
 
     
 def select_ct_expo_spreadsheet(text):
