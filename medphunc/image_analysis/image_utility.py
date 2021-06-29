@@ -621,7 +621,30 @@ def profile_line(image, start_coords, end_coords, *,
     return profile
 
 
+def spatial_frequency_for_mtf(n, spacings):
+    """
+    Return the corresponding spatial frequencies for an MTF
 
+    Parameters
+    ----------
+    n : int
+        Length of the original line sample.
+    spacings : np.array or float
+        spacings in the original line samples.
+
+    Returns
+    -------
+    np.array
+        Frequency array, in unit lp/<whatever unit spacing is in>.
+
+    """
+    try:
+        spac_iter = iter(spacings)
+    except TypeError:
+        spacings = [spacings]
+    
+    freqs = [scipy.fft.fftfreq(n, spacing)[:n//2] for spacing in spacings]
+    return np.vstack(freqs).squeeze()
 
 def get_values_around_cutoff(x, y, cutoff):
     """Return 2 arrays of 2 numbers in x and y, the corresponding to 

@@ -18,6 +18,7 @@ import pydicom
 from medphunc.image_io.ct import rescale_ct_dicom
 from medphunc.image_analysis import image_utility as iu
 from skimage import measure
+from scipy import fft
 
 import cvlog as log
 import logging
@@ -113,7 +114,7 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
     im : np.array
         2d or 3d axial CT image. im[Z, Y, X] 
     pixel_spacing : tuple
-        pixel size of (y, x) in mm.
+        pixel size of (z, y, x) in mm.
     profile_pixel_length : int, optional
         Number of pixels each line profile should be. The default is 20.
     profile_pixel_spacing : TYPE, optional
@@ -158,7 +159,7 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
 
     baddies = boundry_bad + ~angle_good + degenerate
 
-    pixel_spacing = np.array([d.SliceThickness, *d.PixelSpacing])
+    pixel_spacing = np.array(pixel_spacing)
     line_pixel_length = ((pixel_spacing*norms)**2).sum(axis=1)**0.5
 
     # make all the line profiles
@@ -195,10 +196,10 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
     #Normalise to max value
     mtfs = mtfs / mtfs.max(axis=1)[:, None]
 
-    freqs = np.linspace(0, 10*line_pixel_length/4, 10)
+    freqs = iu.spatial_frequency_for_mtf(profile_pixel_length, line_pixel_length).T
 
     freq, mtf = np.median(freqs, axis=1), np.median(mtfs, axis=0)
-
+    
     output = {'Clinical': {'MTF': mtf,
                            'frequency': freq}}
 
@@ -295,8 +296,11 @@ if __name__ == '__main__':
     #Testing for
     fn = 'images/catphan/'
     from medphunc.image_io import ct
-    im, d = ct.load_ct_folder(fn)
-    results = clinical_mtf(im, np.hstack([d.SliceThickness, d.PixelSpacing]))
+    im, d, stuff = ct.load_ct_folder(fn)
+    results = clinical_mtf(im, [d.SliceThickness,*d.PixelSpacing])
+        
+        
+    im, np.hstack([d.SliceThickness, d.PixelSpacing])
     iu.plot_mtf(results)
     results = clinical_mtf(im, d.PixelSpacing)
     iu.plot_mtf(results)
