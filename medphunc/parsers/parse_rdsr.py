@@ -39,8 +39,14 @@ def rdsr_line_to_dic(rdsr):
             except AssertionError as e:
                 print(e)
                 continue
+            except AttributeError as e:
+                print(e)
+                continue
     else:
-        output = rdsr.value
+        try:
+            output = rdsr.value
+        except TypeError:
+            output = None
 
     return output
 
@@ -124,11 +130,16 @@ def check_rdsr_completeness(dose_data, rdsr_metadata):
 
 #%%
 
+
+
+    
+    
+
 def export_for_skin_dose_spreadsheet(dose_data, fn='temp.xlsx'):
     df = dose_data.copy()
-    #Adjust unit magnititudes
+    # Adjust unit magnititudes
 
-    #Want DAP in Gycm^2, assuming Gym^2
+    # Want DAP in Gycm^2, assuming Gym^2
     dap_conversion_factors = utility.dap_unit_conversion(df['dose_area_product_unit'], 'Gycm2')
     df.dose_area_product = df.dose_area_product*dap_conversion_factors
     # df.dose_area_product = 
@@ -137,12 +148,20 @@ def export_for_skin_dose_spreadsheet(dose_data, fn='temp.xlsx'):
     # else:
     #     raise ValueError('DAP in unexpected unit')
 
-    #Want dose in mGy, assuming Gy
+    # Want dose in mGy, assuming Gy
     dose_conversion_factors = utility.dose_unit_conversion(df['dose_(rp)_unit'], 'mGy')
     df['dose_(rp)'] = df['dose_(rp)'] * dose_conversion_factors
 
-    #Want field area in cm^2, assume m^2
-    df.collimated_field_area = df.collimated_field_area * 10000
+    # Find instances of field area which are 0, and try setting them from dose data
+    
+    df.distance_source_to_detector.loc[df.distance_source_to_detector==0] = df.distance_source_to_detector.max()
+    m = df.collimated_field_area == 0
+    df.loc[m, 'collimated_field_area'] = utility.field_area_from_dose_data(df.loc[m,:])
+
+    # Want field area in cm^2, assume m^2
+    df.collimated_field_area *= 10000
+    
+    
     
     # If the material is not copper, set the thickness to 0.
     # %todo make the new thickness depend on the material rather than copper or nothing

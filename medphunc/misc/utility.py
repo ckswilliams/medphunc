@@ -135,3 +135,15 @@ def dose_unit_conversion(dose_unit, preferred_unit='mGy'):
     pref_magnitudes = [convert_unit(u) for u in pref_units]
     pref_mult = pref_magnitudes[0][0]
     return input_mult/pref_mult
+
+def field_area_from_dose_metrics(dose_gy, dap_gym2, source_detector_distance,source_reference_point_distance):
+    return dap_gym2/dose_gy * (source_detector_distance/source_reference_point_distance)**2
+    
+def field_area_from_dose_data(dose_data):
+    dap = dose_data.dose_area_product * dap_unit_conversion(dose_data.dose_area_product_unit, "Gym2")
+    dose = dose_data['dose_(rp)'] * dose_unit_conversion(dose_data['dose_(rp)_unit'], "Gy")
+    
+    field_area = dap / dose * (dose_data.distance_source_to_detector / dose_data.distance_source_to_reference_point)**2
+    return field_area
+    
+    
