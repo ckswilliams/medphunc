@@ -210,17 +210,49 @@ def dfind(d):
     else:
         return query_results_to_dataframe(x)
 
-#%% Advanced utility functions
+#%% Tricksy utility functions
 
 def accession_to_study_uid(accession_number):
-    d = make_dataset('study')
-    d.AccessionNumber = accession_number
-    x = do_find(d)
-    try:
-        return x[0].StudyInstanceUID
-    except:
-        return None
+    search_results = search_accession(accession_number)
+    if search_results is not None:
+        return search_results.study_instance_uid
+    else:
+        return
 
+def search_accession(accession_number):
+    ss = SearchSet('study', AccessionNumber=accession_number)
+    r = ss.find()
+    if r.shape[0] == 1:
+        return r.loc[0,:]
+    elif r.shape[0] > 1:
+        raise(ValueError('Multiple studies found with this accession number'))
+    else:
+        return
+
+def study_from_patient_and_fuzzy_date(patient_id, nominal_study_date,
+                                         date_deltas=[0,-1,1,-2,2],
+                                      modality=None,
+                                      study_description=None):
+    
+    daydelta = pd.to_timedelta(1, unit='day')
+    nominal_study_date = pd.to_datetime(nominal_study_date)
+    
+    for date_delta in date_deltas:
+        search_date = nominal_study_date + date_delta*daydelta
+        search_date = search_date.strftime('%Y%m%d')
+        ss = SearchSet('study', PatientID=patient_id,
+                       StudyDate = search_date,
+                       ModalitiesInStudy=modality,
+                       StudyDescription = study_description
+                       )
+        r = ss.find()
+        if r.shape[0] != 0:
+                return {'delta_found':date_delta,
+                    'study_instance_uid': r.StudyInstanceUID[0],
+                    'search_results':r.iloc[0,:]}
+        
+
+    
 
 #%% Basic movement functions
 
