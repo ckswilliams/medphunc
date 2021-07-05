@@ -16,3 +16,4 @@ conda create --name medph python=3.6 numpy pandas gdcm dicom2nifti jpeg nibabel 
 conda activate medph
 pip install rdsr-navigator pynetdicom
 
+pip install git+https://github.com/ckswilliams/medphunc.git

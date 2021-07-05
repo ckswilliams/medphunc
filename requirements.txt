@@ -11,6 +11,10 @@ astropy
 dicom2nifti
 nibabel
 xmltodict
-rdsr_navigator
+rdsr-navigator
 xlrd
 openpyxl
+astropy
+nibabel
+jpeg
+dicom2nifti
