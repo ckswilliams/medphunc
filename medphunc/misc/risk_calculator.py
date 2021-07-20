@@ -104,9 +104,9 @@ class Risk:
         if gender == 'a':
             self.combine_risks()
         elif gender == 'm':
-            self.risk = self.risk.loc[:,'male']
+            self.risk = self.risk.loc[:,['male']]
         elif gender == 'f':
-            self.risk = self.risk.loc[:,'female']
+            self.risk = self.risk.loc[:,['female']]
         self.calculate_odds()
         self.risk = self.risk.loc[(self.risk.index >= self.age_range[0]) & 
                                   (self.risk.index <= self.age_range[1]),:]
@@ -188,8 +188,25 @@ class Risk:
 class OrganRisk(Risk):
     
     #organs should be converted into a pd.Series with these index labels
-    organs = ['Stomach', 'Low. Large int.', 'Liver', 'Lungs', 'Breasts',
-              'Uterus', 'Ovaries', 'Bladder', 'Other', 'Thyroid', 'Bone marrow'] 
+    organs = [ # BEIR designated organs
+              'Stomach', 'Low. Large int.', 'Liver', 'Lungs', 'Breasts',
+              'Uterus', 'Ovaries', 'Bladder', 'Other', 'Thyroid', 'Bone marrow',
+              # Additional organs for which data should be collected if possible
+              'Oesophagus', 'Salivary glands', 'Skin', 'Bone surface', 'Brain',
+              'Adrenals', 'Extrathoracic region', 'Gall bladder', 'Heart', 'Kidneys',
+              'Lymph', 'Muscle', 'Oral mucosa', 'Pancreas', 'Prostate',
+              'Small intestine', 'Spleen', 'Thymus', 'Uterus'
+              ]
+    
+    icrp_103_weight_factors = {
+        'Stomach':0.12, 'Bone marrow':0.12, 'Low. Large int.':0.12,'Other':0.12,
+        'Breasts':0.12, 'Lungs':0.12,
+        'Ovaries':0.08,
+        'Bladder': 0.04, 'Liver':0.04, 'Thyroid':0.04, 
+        'Bone surface':0.01, 'Brain':0.01, 'Salivary glands':0.01, 'skin':0.01
+        }
+    
+    icrp_60_weight_factors = {}
     
     organ_dose = pd.DataFrame(index=organs, columns = ['male', 'female'])
     
@@ -213,10 +230,13 @@ class OrganRisk(Risk):
             male_fns = OrganRisk.select_source_fns('(Male)')
             female_fns = OrganRisk.select_source_fns('(Female)')
         
-        male_dose = combine_ct_expo_workbooks(male_fns)
+        
+        male_dose = OrganRisk.combine_ct_expo_workbooks(male_fns)
         male_dose.name = 'male'
-        female_dose = combine_ct_expo_workbooks(female_fns)
+        
+        female_dose = OrganRisk.combine_ct_expo_workbooks(female_fns)
         female_dose.name = 'female'
+        
         dats = [dat for dat in [male_dose, female_dose] if not dat.empty]
         organ_dose = pd.concat(dats,axis=1)
         
@@ -226,9 +246,9 @@ class OrganRisk(Risk):
         
         return cls(organ_dose, age_range)
     
-    
     @staticmethod
-    def load_ctexpo_dose_data(fn):
+    def load_ctexpo_dose_data_xls(fn):
+        "Prefer not using this method. Save CT-Expo as an xlsm workbook and it shouldn't be necessary"
         input("This will cause (minor) issues with open Excel workbooks. Please close then press Enter to continue...")
         xlApp = win32com.client.Dispatch("Excel.Application")
         xlApp.Visible = False
@@ -236,7 +256,6 @@ class OrganRisk(Risk):
         xlws = xlwb.Sheets('Berechnung')
         row = 25
         col=9
-        
         
         dose_dic = {}
         for i in range(15):
@@ -246,14 +265,61 @@ class OrganRisk(Risk):
         del(xlApp)
         del(xlwb)
         del(xlws)
+        
         return dose_dic
     
     @staticmethod
+    def load_ctexpo_dose_data_light(fn):
+        
+        df = pd.read_excel('c:/shared/CT-Expo v2.5 (E).xlsm',
+                           sheet_name=6, skiprows=15, 
+                           usecols = [11,12,13] )
+        df.columns = ['Organ', 'male', 'female']
+        df = df.set_index('Organ')
+        return df
+        
+    
+    @staticmethod
+    def load_ctexpo_dose_data(fn):
+        if fn[-4:]=='xlsm':
+            df = pd.read_excel(fn,sheet_name=1, skiprows=24, usecols = [8,9,10,11], header=None)
+            df = df.loc[:14,:]
+            
+            set1 = df.iloc[:,:2]
+            set2 = df.iloc[:,2:]
+            set1.columns = ['Organ', 'dose']
+            set2.columns = ['Organ', 'dose']
+            
+            df = pd.concat([set1,set2], axis=0, ignore_index=True)
+            df = df.set_index('Organ')
+        else:
+            df = OrganRisk.load_ctexpo_dose_data_xls(fn)
+        return df
+    
+    @classmethod
+    def from_ctexpo_light(cls, age_range=None, fns=None):
+        if fns is None:
+            fns = OrganRisk.select_source_fns('CT-Expo with Light mode results')
+        
+        organ_doses = [OrganRisk.load_ctexpo_dose_data_light(fn) for fn in fns]
+        dose_out = organ_doses[0]
+        for od in organ_doses[1:]:
+            dose_out[0]+= od
+            
+        modifiers = {'Low. Large int.':'Colon', 'Breasts':'Breast'}
+        dose_out = OrganRisk.generic_data_loader(dose_out, modifiers)
+        
+        return cls(dose_out, age_range)
+            
+    
+    @staticmethod
     def combine_ct_expo_workbooks(fns):
-        dose_dics = {}
+        if fns is None:
+            return pd.DataFrame()
+        organ_dose_list = []
         for fn in fns:
-            dose_dics[fn] = OrganRisk.load_ctexpo_dose_data(fn)
-        combined_dose = pd.DataFrame(dose_dics).sum(axis=1)
+            organ_dose_list.append(OrganRisk.load_ctexpo_dose_data(fn))
+        combined_dose = pd.concat(organ_dose_list,axis=1).sum(axis=1)
         return combined_dose
     
     @staticmethod
@@ -315,12 +381,88 @@ class OrganRisk(Risk):
         
         return s
 
+    @classmethod
+    def from_opendxmc(cls, age_range=None, male_fns=None, female_fns=None):
+        if not (male_fns or female_fns):
+            male_fns = OrganRisk.select_source_fns(' - openDXMC Exported Organ doses .xlsx, Male')
+            female_fns = OrganRisk.select_source_fns(' - openDXMC Exported Organ doses .xlsx, Female')
+        
+        doses = []
+        if male_fns:
+            male_dose = [OrganRisk.load_opendxmc_data(fn) for fn in male_fns]
+            male_dose = pd.concat(male_dose,axis=1).sum(axis=1)
+            male_dose.name = 'male'
+            doses.append(male_dose)
+        
+        if female_fns:
+            female_dose = [OrganRisk.load_opendxmc_data(fn) for fn in female_fns]
+            female_dose = pd.concat(female_dose,axis=1).sum(axis=1)
+            female_dose.name = 'female'
+            doses.append(female_dose)
+        
+        organ_dose = pd.concat(doses, axis=1)
+        return cls(organ_dose,age_range)
+    
+    @staticmethod
+    def load_opendxmc_data(fn):
+        
+        modifiers = {'Low. Large int.':'Large intestine',
+        'Breasts':'Breast',
+        'Bone marrow':'spongiosa|medullary cavity'}
+        
+        df = pd.read_excel(fn)
+        df = df.loc[:,['Material name', 'Dose [mGy]']]
+        df.columns = ['Organ','dose']
+        
+        organ_doses = OrganRisk.generic_data_loader(df, modifiers)
 
+        return organ_doses
+
+    @staticmethod
+    def generic_data_loader(raw_dose_data, modifiers):
+        """Parse raw dose data from some calculator. raw dose data should have 
+        index as organs, and columns as doses"""
+        
+        organ_doses = {}
+        for organ_key in OrganRisk.organs:
+            #Skip Other until the end
+            if organ_key=='Other':
+                continue
+            organ = organ_key
+            if organ_key in modifiers:
+                organ=modifiers[organ]
+            subset = raw_dose_data.loc[
+                (raw_dose_data.index.str.contains(organ, case=False)) | 
+                 (raw_dose_data.index.map(lambda x: x.lower() in organ.lower())).values,:]
+            #Once we've included an organ, we take it out of the pool
+            raw_dose_data = raw_dose_data.loc[~raw_dose_data.index.isin(subset.index),:]
+            # Add the mean dose of whatever we've found to the total
+            if subset.shape[0] > 0:
+                organ_doses[organ_key] = subset.mean(axis=0)
+        
+        raw_dose_data['Other'] = raw_dose_data.mean(axis=0)
+        
+        return pd.DataFrame.from_dict(organ_doses).T
+        
+    def calculate_effective_dose(self):
+        organ_weighted_dose = self.icrp_103_weight_factors.copy()
+        organ_doses = self.organ_dose.copy()
+        for organ in list(organ_weighted_dose.keys()):
+            if organ=='Other':
+                continue
+            try:
+                organ_weighted_dose[organ] *= organ_doses.loc[organ,:]
+                organ_doses = organ_doses.loc[organ_doses.index!=organ,:]
+            except KeyError:
+                organ_weighted_dose[organ] = 0
+        organ_weighted_dose['Other'] *= organ_doses.mean(axis=0)
+        return pd.DataFrame(organ_weighted_dose).T.sum(axis=0)
+        
+        
 #fns =['M:/MedPhy/General/^Ethics/2020/5-MAY/ATG-017-001_EAC_x/CT-Expo v2.5 (E).xls']
 #o = OrganRisk.combine_ct_expo_workbooks(fns)
 # o = OrganRisk(tt,[30,40])
 # print(o)
-
 
 #%% BEIR VII organ dose method
 
@@ -328,6 +470,9 @@ class OrganRisk(Risk):
 #BEIR VII Table 12D-1
 class BEIR(OrganRisk):
     
+    # Source data. 
+    # Estimated lifetime attributable cancer risk per 100,000 population
+    # per 100 mGy dose.
     mdat=pd.DataFrame({'Age':[0,5,10,15,20,30,40,50,60,70,80],
     'Stomach':[76,65,55,46,40,28,27,25,20,14,7],
     'Low. Large int.':[336,285,241,204,173,125,122,113,94,65,30],
@@ -355,21 +500,34 @@ class BEIR(OrganRisk):
     fdat = fdat.set_index('Age')
     mdat = mdat.set_index('Age')
     
-
+    @staticmethod
+    def apply_beir(organ_dose, sex):
+        if sex=='male':
+            dat = BEIR.mdat
+        elif sex == 'female':
+            dat = BEIR.fdat
+        else:
+            raise(ValueError('Only male and female can be used to designate sex'))
+        #Multiple organs by weighting factors
+        # Set Other to be the mean of all organs not in the BEIR data tables
+        # (including Other!)
+        organ_dose.loc['Other',:] = organ_dose.loc[
+            (organ_dose.index=='Other') |
+            (~organ_dose.index.isin(BEIR.fdat.columns))
+            ].mean()
+        risk = (organ_dose[sex]*dat).sum(axis=1)
+        #Since doses must be in mGy, and weight factors are per 100,000 persons
+        #Divide by both numbers
+        risk = risk / 100000 / 100
+        risk.name = sex
+        return risk
+    
     def calculate_risk(self):
-        risks = []
-        try:
-            m_risk = (self.organ_dose.male*self.mdat).sum(axis=1)/100000
-            m_risk.name = 'male'
-            risks.append(m_risk)
-        except:
-            pass
-        try:
-            f_risk = (self.organ_dose.female*self.fdat).sum(axis=1)/100000
-            f_risk.name = 'female'
-            risks.append(f_risk)
-        except:
-            pass
+        """Risk calculation function employing the BEIR organ weighting factors
+        Assumes that organ doses are in mGy
+        """
+        risks = [BEIR.apply_beir(self.organ_dose, sex) for sex in self.organ_dose.columns]
+
         self.risk = pd.concat(risks,axis=1)
 
 # b=BEIR(tt,[30,50])   
