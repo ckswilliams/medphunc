@@ -135,7 +135,7 @@ def check_rdsr_completeness(dose_data, rdsr_metadata):
     
     
 
-def export_for_skin_dose_spreadsheet(dose_data, fn='temp.xlsx'):
+def export_for_skin_dose_spreadsheet(dose_data):
     df = dose_data.copy()
     # Adjust unit magnititudes
 
@@ -156,12 +156,15 @@ def export_for_skin_dose_spreadsheet(dose_data, fn='temp.xlsx'):
     
     df.distance_source_to_detector.loc[df.distance_source_to_detector==0] = df.distance_source_to_detector.max()
     m = df.collimated_field_area == 0
-    df.loc[m, 'collimated_field_area'] = utility.field_area_from_dose_data(df.loc[m,:])
+    if m.sum() > 0:
+        try:
+            # Wherever there's no field area, estimate it based off the DAP, dose, SID (and correct the oom)
+            df.loc[m, 'collimated_field_area'] = utility.field_area_from_dose_data(df.loc[m,:]) / 10
+        except AttributeError:
+            logger.info('Tried to estimate collimated field size')
 
-    # Want field area in cm^2, assume m^2
+    # Want field area in cm^2, assume ?? m^2
     df.collimated_field_area *= 10000
-    
-    
     
     # If the material is not copper, set the thickness to 0.
     # %todo make the new thickness depend on the material rather than copper or nothing
@@ -186,7 +189,7 @@ def export_for_skin_dose_spreadsheet(dose_data, fn='temp.xlsx'):
     'table_lateral_position',
     'table_longitudinal_position']
     df = df.reindex(columns=export_cols)
-    df.to_excel(fn, 'psd_export', index=False)
+    
     return df
 
 def dump_rdsr(fn, output_fn = 'rdsr_dump.xlsx'):
@@ -201,7 +204,8 @@ def dump_rdsr(fn, output_fn = 'rdsr_dump.xlsx'):
     # Is this fluoro? if so try to make an abbreviated sheet that can be used to calculate PSD
     if dose_data.columns.str.contains('dose_(rp)', regex=False).any():
         try:
-            df = export_for_skin_dose_spreadsheet(dose_data, writer)
+            df = export_for_skin_dose_spreadsheet(dose_data)
+            df.to_excel(writer, 'psd_export', index=False)
             output['skin_dose_data'] = df
 
         except Exception as e:
@@ -210,7 +214,7 @@ def dump_rdsr(fn, output_fn = 'rdsr_dump.xlsx'):
     try:
         check_rdsr_completeness(dose_data, rdsr_metadata)
     except ValueError as e:
-        raise(e)
+        #raise(e)
         logger.warning('Inconsistency encountered in RDSR contents: %s', e)
         dose_data.index+=1
         dose_data =  dose_data.sort_index()
