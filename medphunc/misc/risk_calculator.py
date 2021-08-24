@@ -141,6 +141,7 @@ class Risk:
         return self.odds
     
     def calculate_cohort_odds(self):
+        return float_formatter(1/self.risk.mean().mean())
         if self.gender == 'a':
             return float_formatter(1/self.risk["average"].mean())
         else:
@@ -271,7 +272,7 @@ class OrganRisk(Risk):
     @staticmethod
     def load_ctexpo_dose_data_light(fn):
         
-        df = pd.read_excel('c:/shared/CT-Expo v2.5 (E).xlsm',
+        df = pd.read_excel(fn,
                            sheet_name=6, skiprows=15, 
                            usecols = [11,12,13] )
         df.columns = ['Organ', 'male', 'female']
