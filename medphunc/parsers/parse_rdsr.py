@@ -159,7 +159,7 @@ def export_for_skin_dose_spreadsheet(dose_data):
     if m.sum() > 0:
         try:
             # Wherever there's no field area, estimate it based off the DAP, dose, SID (and correct the oom)
-            df.loc[m, 'collimated_field_area'] = utility.field_area_from_dose_data(df.loc[m,:]) / 10
+            df.loc[m, 'collimated_field_area'] = utility.field_area_from_dose_data(df.loc[m,:]) / 100
         except AttributeError:
             logger.info('Tried to estimate collimated field size')
 
