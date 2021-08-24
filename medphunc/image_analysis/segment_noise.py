@@ -87,17 +87,16 @@ class Segmenter:
 
 
     def generate_masks(self):
-        self.masks = {}
         for region, region_data in self.data.items():
             if 'threshold' in region_data:
                 threshold = region_data['threshold']
-                self.masks[region] = (self.im > threshold [0]) & (self.im < threshold[1])
+                self.data[region]['mask'] = (self.im > threshold [0]) & (self.im < threshold[1])
                 
             if 'cv_roi' in region_data:
                 m = np.zeros(self.im.shape)
                 i = cv_roi_to_index(region_data['cv_roi'])
                 m[:,i[0]:i[1], i[2]:i[3]] = 1
-                self.masks[region] = m==1
+                self.data[region]['mask'] = m==1
                 
                 
     

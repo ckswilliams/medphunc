@@ -531,9 +531,11 @@ def align_line_profiles(ROI, midpoint=None):
     return output
 
 
-def interactive_select_roi(im, window_level):
-    show_im = apply_window(im, window_level)
-    r = cv2.selectROI(show_im)
+def interactive_select_roi(im, window_level=None):
+    if window_level is not None:
+        im = apply_window(im, window_level)
+    
+    r = cv2.selectROI(im)
     roi = apply_cv_roi(im, r)
     return roi
 
