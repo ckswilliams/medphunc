@@ -11,6 +11,7 @@ import numpy as np
 import sys
 import glob
 from collections import Counter
+import pathlib
 
 
 import logging
@@ -53,13 +54,13 @@ def load_ct_folder(folder, return_tags='middle'):
         details of one file, for metadata
 
     """
-    
+    folder = pathlib.Path(folder)
     # load the DICOM files
     files = []
     logger.info('glob: {}'.format(folder))
-    for fname in glob.glob(folder+'*', recursive=False):
-        logger.debug("loading: {}".format(fname))
-        files.append(pydicom.read_file(fname))
+    for fpath in folder.glob('**/*'):
+        logger.debug("loading: %s", fpath)
+        files.append(pydicom.read_file(fpath))
     
     logger.info("file count: {}".format(len(files)))
     
