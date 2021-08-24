@@ -37,7 +37,44 @@ class Archer:
         b = np.interp(kV, xp, yp[:, 1])
         y = np.interp(kV, xp, yp[:, 2])
         return a, b, y
+
+
+#%%
+
+class Kusano:
+    def __init__(self):
+        self.df_att_coeff = pd.DataFrame([['I-131','Lead',0.1078,0.2003,0.4957],
+                                            ['I-131','Concrete', 0.1705, -0.1308, 1.038]],
+                                         columns=['Isotope','Material','a','b','y'])
+        
+    #Transmission calculation functions
+    def shielding_to_transmission(self, thickness, material, isotope):
+        a, b, y = self.get_shielding_coefficients(material, isotope)
+        return ((1 + b/a) * np.exp(a*y*thickness) - b/a)**(-1/y)
+
+    def transmission_to_shielding(self, transmission, material, isotope):
+        a, b, y = self.get_shielding_coefficients(material, isotope)
+        x = 1 / (a*y) * np.log((transmission**(-y) + (b/a)) / (1+(b/a)))
+        return x
+
+    def get_shielding_coefficients(self, material, isotope):
+        view = self.df_att_coeff.query("Isotope==@isotope").query('Material==@material')
+        return view.loc[:,['a','b','y']].iloc[0,:]
     
+k = Kusano()
+k.shielding_to_transmission(15.4, 'Lead','I-131')
+
+#%%    
+    
+        #view.index = view.kV
+        xp = np.array(view['Isotope'])
+        yp = np.array(view[['a', 'b', 'y']])
+        a = np.interp(isotope, xp, yp[:, 0])
+        b = np.interp(isotope, xp, yp[:, 1])
+        y = np.interp(isotope, xp, yp[:, 2])
+        return a, b, y
+
+
 #%% Testing
 if __name__=='__main__':
     #Initialise a class object
