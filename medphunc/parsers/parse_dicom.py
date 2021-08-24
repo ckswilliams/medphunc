@@ -58,6 +58,10 @@ def dicom_folder_to_metadata(folder, suffix='.dcm', recursive=True):
     df = dicom_files_to_metadata(fns)
     return df
 
+def dicom_objects_to_dataframe(dicom_objects):
+    dd = [extract_metadata(d) for d in dicom_objects]
+    return pd.DataFrame(dd)
+
 #%%
 
 
