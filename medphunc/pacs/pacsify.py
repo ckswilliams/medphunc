@@ -20,6 +20,7 @@ from pynetdicom import AE
 from pynetdicom import QueryRetrievePresentationContexts
 from pynetdicom import VerificationPresentationContexts
 from pynetdicom import StoragePresentationContexts
+
 from time import sleep
 import datetime
 import pandas as pd
@@ -29,6 +30,21 @@ import pathlib
 import copy
 #from pynetdicom import debug_logger
 #debug_logger()
+
+
+#%%
+import pynetdicom
+if pynetdicom.__version__ >= '1.5':
+    from pynetdicom.sop_class import PatientRootQueryRetrieveInformationModelFind
+    from pynetdicom.sop_class import PatientRootQueryRetrieveInformationModelMove
+    from pynetdicom.sop_class import StudyRootQueryRetrieveInformationModelFind
+    from pynetdicom.sop_class import StudyRootQueryRetrieveInformationModelMove
+else:
+    PatientRootQueryRetrieveInformationModelFind = 'P'
+    PatientRootQueryRetrieveInformationModelMove = 'P'
+    StudyRootQueryRetrieveInformationModelFind = 'S'
+    StudyRootQueryRetrieveInformationModelMove = 'S'
+    
 
 #%%
 
@@ -94,13 +110,20 @@ def make_my_ae():
 
 def ensure_assoc():
     global assoc
+    def test_assoc(assoc):
+        if 'is_alive' in dir(assoc):
+            return assoc.is_alive()
+        else:
+            return assoc.isAlive()
+    
     try:
-        if assoc.isAlive():
+        if test_assoc(assoc):
             return assoc
     except:
         pass
     assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
-    if assoc.isAlive():
+    
+    if test_assoc(assoc):
         return assoc
     else:
         print('assoc failed :(')
@@ -157,9 +180,9 @@ def do_find(d):
     """
     ensure_assoc()
     if d.QueryRetrieveLevel == 'PATIENT':
-        generator = assoc.send_c_find(d,query_model='P')
+        generator = assoc.send_c_find(d,query_model = StudyRootQueryRetrieveInformationModelFind)
     else:
-        generator = assoc.send_c_find(d, query_model = 'S')
+        generator = assoc.send_c_find(d, query_model = StudyRootQueryRetrieveInformationModelFind)
     x = run_query(generator)
     return x
 
@@ -180,9 +203,9 @@ def do_move(d):
     """
     ensure_assoc()
     if d.QueryRetrieveLevel == 'PATIENT':
-        generator = assoc.send_c_move(d, MY.aet, query_model='P')
+        generator = assoc.send_c_move(d, MY.aet, query_model = PatientRootQueryRetrieveInformationModelMove)
     else:
-        generator = assoc.send_c_move(d, MY.aet, query_model = 'S')
+        generator = assoc.send_c_move(d, MY.aet, query_model = StudyRootQueryRetrieveInformationModelMove)
     x = run_query(generator)
     return x[-1]
 
