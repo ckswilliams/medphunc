@@ -23,7 +23,6 @@ import cv2
 
 from medphunc.image_analysis import radial_data
 
-import cvlog as log
 import logging
 
 #%% logging
@@ -277,7 +276,7 @@ def localise_phantom(im, threshold = None):
         seg[center[0]-20:center[0]+20,center[1]-5:center[1]+5] = 0
         seg[center[0]-5:center[0]+5,center[1]-20:center[1]+20] = 0
         
-        log.image(log.Level.INFO, seg*.99)
+        #log.image(log.Level.INFO, seg*.99)
     
     return output
 
@@ -527,7 +526,7 @@ def align_line_profiles(ROI, midpoint=None):
     indexes = np.apply_along_axis(interp_first_index, 0, smoothed, midpoint)
     shifts = ROI.shape[0]//2 - indexes
     output = shift_columns_by_subpixel(ROI, shifts)
-    log.image(log.Level.TRACE, apply_window(output))
+    #log.image(log.Level.TRACE, apply_window(output))
     return output
 
 

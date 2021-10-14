@@ -74,7 +74,7 @@ def load_ct_folder(folder, return_tags='middle'):
             skipcount = skipcount + 1
     
     if len(slices) == 0:
-        raise(FileNotFoundError('No dicom image files found in '+folder))
+        raise(FileNotFoundError('No dicom image files found in %s', folder))
     
     logger.info("skipped, no SliceLocation: {}".format(skipcount))
     

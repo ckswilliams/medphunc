@@ -20,7 +20,7 @@ from medphunc.image_analysis import image_utility as iu
 from skimage import measure
 from scipy import fft
 
-import cvlog as log
+
 import logging
 
 #%%
@@ -254,7 +254,7 @@ def old_clinical_mtf(im, pixel_spacing, roi_size=(50, 30)):
         x = seg_data['anterior_point'][1]
 
         roi = iu.extract_patch_around_point(im_2d, (y, x), roi_size)
-        log.image(log.Level.TRACE, iu.apply_window(roi))
+        #log.image(log.Level.TRACE, iu.apply_window(roi))
 
         # find the index of array element with the highest rate of change
         roi = iu.align_line_profiles(roi, -500)
@@ -297,9 +297,8 @@ if __name__ == '__main__':
     fn = 'images/catphan/'
     from medphunc.image_io import ct
     im, d, stuff = ct.load_ct_folder(fn)
-    results = clinical_mtf(im, [d.SliceThickness,*d.PixelSpacing])
-        
-        
+    results = clinical_mtf(im, [d.SliceThickness, *d.PixelSpacing])
+
     im, np.hstack([d.SliceThickness, d.PixelSpacing])
     iu.plot_mtf(results)
     results = clinical_mtf(im, d.PixelSpacing)
