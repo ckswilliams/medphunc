@@ -12,8 +12,9 @@ I recommend that these scripts are used with an anaconda distribution.
 To set up an anaconda environment from scratch that is compatible with this package, start with something like the following:
 
 conda config --add channels conda-forge
-conda create --name medph python=3.6 numpy pandas gdcm dicom2nifti jpeg nibabel opencv spyder scikit-image scikit-learn astropy lxml openpyxl xlrd spyder
-conda activate medph
-pip install rdsr-navigator pynetdicom
+conda create --name medph python=3.9 numpy pandas dicom2nifti jpeg nibabel opencv spyder scikit-image scikit-learn astropy lxml openpyxl xlrd spyder
+conda activate medph pynetdicom
+pip install rdsr-navigator python-gdcm
+
 
 pip install git+https://github.com/ckswilliams/medphunc.git
