@@ -12,6 +12,7 @@ import sys
 import glob
 from collections import Counter
 import pathlib
+import os
 
 
 import logging
@@ -131,7 +132,44 @@ def load_ct_folder(folder, return_tags='middle'):
     
     # Return the 3d array, and a dicom file for extracting metadata
     return img3d, return_d, (start_point, end_point)
+#%% in progress
 
+def save_ct_folder(im: np.array, folder: os.PathLike, d:pydicom.Dataset):
+    folder = pathlib.Path(folder)
+    dd = d.copy()
+    os.makedirs(folder, exist_ok=True)
+    im = im.copy().astype('int'+str(d.BitsStored))
+    for z_n in range(im.shape[0]):
+        dd.SOPInstanceUID = f'SOPInstanceUID{z_n}'
+        dd.SOPInstanceUID = f'SOPInstanceUID{z_n}'
+        dd.SeriesNumber=z_n+1
+        dd.PixelData = im[z_n,].tobytes()
+        offset = get_slice_position_offset(d, z_offset=z_n)
+        new_slice_location = float(dd.SliceLocation)+offset[0]
+        d.SliceLocation = f'{new_slice_location:.1f}'
+        new_image_position = d.ImagePositionPatient[::-1] + offset
+        d.ImagePositionPatient = [str(f) for f in new_image_position[::-1]]
+        pydicom.write_file(folder / str(dd.SOPInstanceUID+'.dcm'), dd)
+
+
+def get_slice_position_offset(d, z_offset=0, y_offset=0, x_offset=0):
+    pixel_spacing = np.array([d.SliceThickness, *d.PixelSpacing])
+    image_orientation = np.array(d.ImageOrientationPatient).reshape((2,3))
+    image_orientation = image_orientation[::-1,::-1]
+    z_cosine = np.cross(image_orientation[0,],image_orientation[1,])
+    image_orientation=np.vstack((z_cosine,image_orientation))
+    single_slice_motion = np.array([z_offset, y_offset, x_offset]) * pixel_spacing
+    offset = np.dot(single_slice_motion, image_orientation)
+    return offset
+
+#%%
 if __name__ == '__main__':
     folder = sys.argv[0]
     load_ct_folder(folder)
+    
+
+
+
+
+
+
