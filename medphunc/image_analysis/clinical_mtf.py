@@ -98,16 +98,19 @@ def smooth_esf(line_profiles, max_badbuffer=120, min_badbuffer=25):
 #%%
 
 
-def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spacing=1,
+def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spacing=0.5,
                  step_size=8,
                  # min above, max above, max below
                  magnitude_requirement=(-975, -50, 100),
-                 bad_extrema_buffer=(120, 25)):
+                 bad_extrema_buffer=(120, 25),
+                 threshold=-300,
+                 high_hu_object=True):
     """
     Calculate the MTF for clinical volumetric patient images.
     
     Calculate MTF using the method suggested by Sanders et al.
     https://aapm.onlinelibrary.wiley.com/doi/pdf/10.1118/1.4961984
+    with a little extra special sauce
 
     Parameters
     ----------
@@ -118,13 +121,24 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
     profile_pixel_length : int, optional
         Number of pixels each line profile should be. The default is 20.
     profile_pixel_spacing : TYPE, optional
-        How frequently to sample for the line. Lowering this value reduces averaging. The default is 1.
+        How frequently to sample for the line. Lowering this value reduces averaging. The default is 0.5.
     step_size : int, optional
-        Used for generating the 3d mesh. See scipy.measure.marching_cubes_lewinar. The default is 8.
+        Used for generating the 3d mesh. See scipy.measure.marching_cubes_lewinar.
+        Strongly affects processing time. The default is 8, which is appropriate
+        for 512x512 volumes. For small subvolumes, the algorithm may fail unless
+        reduced to 1.
     magnitude_requirement : tuple(int, int, int), optional
         Magnitude requirements(Min below, max above, max below). The default is (-975, -50, 100).
+        In the future, this can be ignored by supplying None.
     bad_extrema_buffer : tuple(int, int), optional
-        DESCRIPTION. The default is (120,25).
+        Not used. The default is (120,25).
+    threshold : numeric, optional
+        determines what counts as internal vs external to the object. 
+        The default is -300, which is a reasonable discriminator between air/any tissue
+    invert_threshold : boolean, optional
+        False if the object is greater in HU than the background (i.e. patient in air)
+        True if the object is lesser in HU (i.e. supplied cropped contrast object
+                                            in a phantom)
 
     Returns
     -------
@@ -133,16 +147,32 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
         dict('Clinial':{'frequency':frequency, 'MTF:mtf}).
 
     """
-    verts, faces, norms, val = measure.marching_cubes_lewiner(im > -300,
-                                                              #spacing=None,
-                                                              level=0.5,
-                                                              step_size=step_size,
-                                                              allow_degenerate=True
-                                                              )
 
+    # m = im > threshold
+    # if invert_threshold:
+    #     m = ~m
+    if high_hu_object:
+        gradient_direction = 'descent'
+    else:
+        gradient_direction = 'ascent'
+
+    # Create a mesh from the image
+    verts, faces, norms, val = measure.marching_cubes(
+        im,
+        level=threshold,
+        gradient_direction=gradient_direction,
+        #spacing=None,
+        #level=0.5,
+        step_size=step_size,
+        allow_degenerate=True
+    )
+
+    # Get the start and finish of each possible line profile going through
+    # one of the mesh vertices
     p0s = verts-norms*profile_pixel_length/2
     p1s = verts+norms*profile_pixel_length/2
 
+    # Calculate the angle between the
     angles = np.array([np.arccos(np.dot(n, [1, 0, 0]))
                        for n in norms])/np.pi*180
     angle_good = (angles > 70) & (angles < 110)
@@ -162,19 +192,15 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
     pixel_spacing = np.array(pixel_spacing)
     line_pixel_length = ((pixel_spacing*norms)**2).sum(axis=1)**0.5
 
+    mesh_index = np.where(~baddies)[0]
+
     # make all the line profiles
-
-    line_profiles = []
-    mesh_index = []
-
-    for i in range(len(verts)):
-        if not baddies[i]:
-            line = iu.profile_line(
-                im, p0s[i], p1s[i], spacing=profile_pixel_spacing, order=1, endpoint=False)
-            line_profiles.append(line[:profile_pixel_length])
-            mesh_index.append(i)
+    line_profiles = points_to_line_profiles(
+        im, p0s[mesh_index], p1s[mesh_index], profile_pixel_spacing, profile_pixel_length)
 
     line_profiles = np.array(line_profiles)
+    if not high_hu_object:
+        line_profiles = line_profiles[:, ::-1]
     mesh_index = np.array(mesh_index)
 
     # Catch magnitude issues
@@ -196,14 +222,31 @@ def clinical_mtf(im, pixel_spacing, profile_pixel_length=20, profile_pixel_spaci
     #Normalise to max value
     mtfs = mtfs / mtfs.max(axis=1)[:, None]
 
-    freqs = iu.spatial_frequency_for_mtf(profile_pixel_length, line_pixel_length).T
+    freqs = iu.spatial_frequency_for_mtf(
+        line_profiles.shape[1], line_pixel_length*profile_pixel_spacing).T
 
     freq, mtf = np.median(freqs, axis=1), np.median(mtfs, axis=0)
-    
+
     output = {'Clinical': {'MTF': mtf,
                            'frequency': freq}}
 
     return output
+
+
+def points_to_line_profiles(im, p0s, p1s, profile_pixel_spacing, profile_pixel_length):
+    line_profiles = []
+    for p0, p1 in zip(p0s, p1s):
+        line = iu.profile_line(
+            im, p0, p1, spacing=profile_pixel_spacing, order=1, endpoint=False)
+        line_profiles.append(
+            line[:int(profile_pixel_length/profile_pixel_spacing)])
+    return line_profiles
+
+
+def clinical_mtf_from_dicom_metadata(im, d, **kwargs):
+    "Rough and ready method for calculating the clinical MTF for a patient volume and dicom header"
+    pixel_spacing = np.array([d.SliceThickness, *d.PixelSpacing])
+    return clinical_mtf(im, pixel_spacing, **kwargs)
 
 
 #%%
