@@ -151,9 +151,42 @@ def calculate_circular_coords(center, radius, n):
     return list(zip(y,x))
 
 def get_ct_region_coords(im, radius = 120, n=16):
-    center = localise_phantom(im)['center']
+    center = localise_phantom(im)['center'][-2:]
     return calculate_circular_coords(center, radius, n)
 
+#%%
+
+def analyse_phantom_find_homogeneity(im: np.array) -> typing.List[int]:
+    """
+    Assuming a cylindrical phantom, defined with HU within -300 < I < 300,
+    find the most homogeneous slices, returning all slices indexes 
+    with std within 20% of the minimum.
+    Ignore the outermost 10 pixels of the phantom.
+    Doesn't require contiguous indices at this time
+
+    Parameters
+    ----------
+    im : np.array
+        3d image of a phantom, indices as z,y,x.
+
+    Returns
+    -------
+    np.array(z_indices)
+        array containing all z_indices which have std within 20% of the minimum.
+
+    """
+    # Create a mask of where the phantom is within -300,300
+    m = (im>-300) & (im<300)
+    #binary operations to reduce some possible incosistencies
+    m = binary_fill_holes(m)
+    m = binary_erosion(m, np.ones([1,3,3]),iterations=10)
+    #create a masked array
+    mim = np.ma.masked_array(im,~m)
+    z_counts = (~mim.mask).sum(axis=(1,2))
+    mm = z_counts<(z_counts.max()/2)
+    z_std = mim.std(axis=(1,2))
+    z_std.mask = mm
+    return np.ma.where(z_std < z_std.min()*1.2)[0]
 
 #%% Amalgamation functions
     
@@ -251,6 +284,16 @@ def calculate_planar_nnps(im: np.array,
     show_region_coords(im, region_coords, region_size*2//3)
     
     return calculate_nnps_from_region_coords(im, region_coords, region_size, pixel_size)
+
+
+def automate_ct_phantom_nnps(im,d, **kwargs):
+    phantom_location = iu.localise_phantom(im)
+    xr = phantom_location['x_range']
+    nps_radius = int((xr[1]-xr[0])/2*.5)
+    z = analyse_phantom_find_homogeneity(im)
+    nps = calculate_ct_nnps(im=im[z,], pixel_size=d.PixelSpacing, radius=nps_radius, **kwargs)
+    nps_output = analyse_nnps(nps, d.PixelSpacing[0])
+    return nps_output
 
 #%%
 
