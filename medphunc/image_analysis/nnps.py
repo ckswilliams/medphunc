@@ -13,16 +13,18 @@ Script for calculating NNPS. Not finished!
 import numpy as np
 from matplotlib import pyplot as plt
 import pydicom
-from scipy import fftpack
-import scipy.ndimage
-from scipy.signal.signaltools import detrend
+import typing
+#from scipy import fftpack
+#import scipy.ndimage
+#from scipy.signal.signaltools import detrend
 #from scipy.signal import medfilt
-from astropy.modeling import models, fitting
+#from astropy.modeling import models, fitting
 
+from scipy.ndimage import binary_fill_holes, binary_erosion
 
-# Interal imports
+# Internal imports
 
-from medphunc.image_analysis.radial_data import radial_data
+#from medphunc.image_analysis.radial_data import radial_data
 from medphunc.image_io.ct import load_ct_folder
 from medphunc.image_analysis.image_utility import localise_phantom, detrend_region, calculate_radial_average
 from medphunc.image_analysis import image_utility as iu
@@ -31,7 +33,6 @@ from medphunc.image_analysis import image_utility as iu
 
 import logging
 logger = logging.getLogger(__name__)
-import cvlog
     
 
 #%% General functions
@@ -39,11 +40,11 @@ import cvlog
 def show_region_coords(im, region_coords, region_size=70, pixel_value=0):
     """Show the regions selected for analysis overlaid on the original image"""
     im = im.copy()
-    for xy in region_coords:
-        im[int(xy[0]-region_size/2) : int(xy[0]+region_size/2),
-                     int(xy[1]-region_size/2) : int(xy[1]+region_size/2),] = pixel_value
+    for yx in region_coords:
+        im[int(yx[0]-region_size/2) : int(yx[0]+region_size/2),
+                     int(yx[1]-region_size/2) : int(yx[1]+region_size/2)] = pixel_value
     if im.ndim ==3:
-        imshow = im[:,:,2]
+        imshow = im[1,:,:]
     else:
         imshow=im
     plt.imshow(imshow)
@@ -51,7 +52,15 @@ def show_region_coords(im, region_coords, region_size=70, pixel_value=0):
 
 def get_regions(im, region_coords, region_size=70,):
     """Extract patches from the image corresponding to squares having the coordinates and size shown"""
-    regions = [iu.apply_cv_roi(im, [(xy[1]-region_size/2)//1, (xy[0]-region_size/2)//1, region_size, region_size]) for xy in region_coords]
+    regions = []
+    for yx in region_coords:
+        cvroi = [int((yx[1]-region_size/2)), int((yx[0]-region_size/2)), region_size, region_size]
+        if len(im.shape)==3:
+            for i in range(im.shape[0]):
+                regions.append(iu.apply_cv_roi(im[i,], cvroi))
+        else:
+            regions.append(iu.apply_cv_roi(im, cvroi))
+    #regions = [iu.apply_cv_roi(im, [(yx[1]-region_size/2)//1, (yx[0]-region_size/2)//1, region_size, region_size]) for yx in region_coords]
     #regions = [im[int(xy[0]-region_size/2) : int(xy[0]+region_size/2),
     #                 int(xy[1]-region_size/2) : int(xy[1]+region_size/2),] for xy in region_coords]
     return regions
@@ -63,15 +72,19 @@ def detrend_regions(regions):
 
 
 def aggregate_nps(regions):
-    ffts = [np.fft.fftn(region) for region in regions]
-    ffts = [np.abs(fft)**2 for fft in ffts]
+    ffts = []
+    for region in regions:
+        fft = np.abs(np.fft.fftn(region))**2
+        ffts.append(fft)
     aggregated_nps = np.sum(ffts,axis=0)
     aggregated_nps = np.fft.fftshift(aggregated_nps)
     return aggregated_nps
 
 
+#todo should I divide or multiply by pixel dimensions?!
 def calculate_normalisation(pixel_dims, region_size, n_regions):
-    return np.product(pixel_dims) * np.product(region_size)
+    return np.product(pixel_dims) / np.product(region_size) / n_regions
+
 
 
 def extract_profiles(fft):
@@ -165,17 +178,18 @@ def calculate_nnps_from_region_coords(im, region_coords, region_size, pixel_size
     regions = get_regions(im, region_coords, region_size)
     regions = detrend_regions(regions)
     nps = aggregate_nps(regions)
-    nnps = nps / calculate_normalisation(pixel_size, regions[0].shape, len(regions))
+    nnps = nps * calculate_normalisation(pixel_size, regions[0].shape, len(regions))
     
     return nnps
 
 
 #%% CT amalgamation function
 
-def calculate_ct_nnps(im, pixel_size,
-                      n_regions=16,
-                      radius=120,
-                      region_size=70):
+def calculate_ct_nnps(im: np.array,
+                      pixel_size:typing.Iterable[float],
+                      n_regions: int=16,
+                      radius: int=120,
+                      region_size: int=64):
     """
     Calculate the NNPS for a 2d or 3d CT noise image, sampling
     regions in a circular pattern. Normalisation not properly validated.
@@ -185,7 +199,7 @@ def calculate_ct_nnps(im, pixel_size,
     im : np.array
         2d or 3d array, showing a uniform circular object.
     pixel_size : tuple
-        x and y pixel dimensions.
+        [y,x] pixel dimensions.
     n_regions : int, optional
         number of regions to sample. The default is 16.
     radius : float, optional
@@ -201,13 +215,14 @@ def calculate_ct_nnps(im, pixel_size,
     """
     #find_phantom_center(im)
     region_coords=get_ct_region_coords(im, radius, n_regions)
-    show_region_coords(im, region_coords, region_size*2//3)
+    #show_region_coords(im, region_coords, region_size*2//3)
     
     return calculate_nnps_from_region_coords(im, region_coords, region_size, pixel_size)
 
-def calculate_planar_nnps(im, pixel_size,
-                      region_size=128,
-                      region_overlap = 0.5):
+def calculate_planar_nnps(im: np.array,
+                          pixel_size: typing.Iterable[float],
+                      region_size: int=128,
+                      region_overlap: float=0.5):
     """
     Calculate the NNPS for a 2d noise image, sampling
     regions in a circular pattern. Normalisation not properly validated.
@@ -216,8 +231,8 @@ def calculate_planar_nnps(im, pixel_size,
     ----------
     im : np.array
         2d or 3d array, showing a uniform circular object.
-    pixel_size : tuple
-        x and y pixel dimensions.
+    pixel_size : iterable
+        [y, x] pixel dimensions.
     n_regions : int, optional
         number of regions to sample. The default is 16.
     radius : float, optional
