@@ -35,7 +35,7 @@ def expand_dictionary_to_columns(df):
     """
     logger.debug('Expanding all dictionaries in dataframe')
     json_struct = json.loads(df.to_json(orient="records"))
-    df = pd.io.json.json_normalize(json_struct)
+    df = pd.json_normalize(json_struct)
     
     ''' Old version, new version is much shorter. Is it faster though?
     dict_row_bool = df[col].apply(lambda x: type(x) == collections.OrderedDict)
@@ -50,7 +50,7 @@ def expand_dictionary_to_columns(df):
     return(df)
 
 #%%
-    
+    ''' deprecated version?
 def explode_list(df, lst_cols, fill_value=''):
     """
     Explode any lists in the specified column such that each element is in
@@ -60,6 +60,7 @@ def explode_list(df, lst_cols, fill_value=''):
     if lst_cols and not isinstance(lst_cols, list):
         lst_cols = [lst_cols]
     # all columns except `lst_cols`
+    
     idx_cols = df.columns.difference(lst_cols)
 
     # calculate lengths of lists
@@ -79,7 +80,21 @@ def explode_list(df, lst_cols, fill_value=''):
             for col in idx_cols
         }).assign(**{col:np.concatenate(df[col].values) for col in lst_cols}) \
           .append(df.loc[lens==0, idx_cols]).fillna(fill_value) \
-          .loc[:, df.columns]
+          .loc[:, df.columns]'''
+          
+def explode_list(df, lst_cols, fill_value=''):
+    """
+    Explode any lists in the specified column such that each element is in
+    it's own row. All other columns are replicated for each element in the list
+    """
+    if lst_cols and not isinstance(lst_cols, list):
+        lst_cols = [lst_cols]
+    
+    for lst_col in lst_cols:
+        df = df.explode(lst_col)
+    return df
+    
+    
 
 #%%
           
