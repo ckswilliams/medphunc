@@ -68,7 +68,6 @@ def search_combine_results(col:pd.Series, search_terms:list) -> pd.DataFrame:
     for search_term in search_terms:
         test = col.str.extract(search_term)[0]
         search_results.append(test)
-        print((~test.isna()).sum())
     
     
     results  = pd.concat(search_results, axis=1)
