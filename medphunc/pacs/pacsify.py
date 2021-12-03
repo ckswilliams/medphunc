@@ -31,7 +31,6 @@ import copy
 #from pynetdicom import debug_logger
 #debug_logger()
 
-
 #%%
 import pynetdicom
 if pynetdicom.__version__ >= '1.5':
@@ -54,6 +53,7 @@ logger.setLevel(logging.INFO)
 
 if len(logger.handlers) == 0:
     logger.addHandler(logging.StreamHandler())
+
 
 
 #%% AE wrapper class
@@ -102,6 +102,12 @@ assoc = None
 
 #%% Utility functions
 
+def test_assoc(assoc):
+    if 'is_alive' in dir(assoc):
+        return assoc.is_alive()
+    else:
+        return assoc.isAlive()
+
 def make_my_ae():
     ae = AE(MY.aet)
     ae.requested_contexts = QueryRetrievePresentationContexts
@@ -110,11 +116,7 @@ def make_my_ae():
 
 def ensure_assoc():
     global assoc
-    def test_assoc(assoc):
-        if 'is_alive' in dir(assoc):
-            return assoc.is_alive()
-        else:
-            return assoc.isAlive()
+
     
     try:
         if test_assoc(assoc):
@@ -153,7 +155,7 @@ def do_ping():
     ae = AE(MY.aet)
     ae.requested_contexts = VerificationPresentationContexts
     assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
-    if assoc.isAlive():
+    if test_assoc(assoc):
         generator = assoc.send_c_echo()
         return run_query(generator)
     else:
@@ -365,73 +367,97 @@ def find_images_from_series():
 class SearchSet(pydicom.Dataset):
     
     def __init__(self, query_level='series', **kwargs):
-        super(SearchSet, self).__init__()
+        super().__init__()
         self.initialise_searchable_tags(query_level)
         self.set_tags(**kwargs)
+
+    searchable_tags = {
+        'study': [
+
+            # Required for moves (some systems)
+            'StudyInstanceUID',
+            # Optional
+            'StudyDate',
+            'PatientName',
+            'PatientID',
+            'PatientBirthDate',
+            'AccessionNumber',
+            'StudyDescription',
+            'StudyID',
+            'StudyTime',
+            'StudyInstanceUID',
+            'NumberOfStudyRelatedSeries',
+            'StationName',
+            'SpecificCharacterSet',
+            'ModalitiesInStudy',
+            'Manufacturer',
+            'ManufacturerModelName',
+            'InstitutionName'
+        ],
+        'series': [
+            # Required (some systems)
+            'StudyInstanceUID',
+            # Required for moves (some systems)
+            'SeriesInstanceUID',            
+            # Optional
+            'SeriesDescription',
+            'SeriesNumber',
+            'Modality',
+            'NumberOfSeriesRelatedInstances',
+            'StationName',
+            'SpecificCharacterSet',
+            'SeriesDate',
+            'AccessionNumber',
+            'SeriesTime',
+            'Manufacturer',
+            'ManufacturerModelName'
+        ],
+        'instance': [
+            # Required (some systems)
+            'SeriesInstanceUID',
+            'StudyInstanceUID',
+            # Required for moves (some systems)
+            'SOPInstanceUID',
+            # Optional
+            'AccessionNumber',
+            'StationName',
+            'SeriesDate',
+            'SeriesTime',
+            'SOPClassUID',
+            'InstanceNumber',
+            'SpecificCharacterSet',
+            'StudyInstanceUID'
+        ],
+        'patient': [
+            'PatientName',
+            'PatientSex',
+            'PatientID',
+            'AccessionNumber'
+        ]
+    }
 
     def initialise_searchable_tags(self, query_level):
 
         if query_level=='study':
             self.QueryRetrieveLevel = 'STUDY'
-            self.StudyDate = ''
-            #Required
-            self.StudyInstanceUID = ''
-            #Optional
-            self.PatientName = ''
-            self.PatientID = ''
-            self.PatientBirthDate = ''
-            self.AccessionNumber = ''
-            self.StudyDescription = ''
-            self.StudyID = ''
-            self.StudyTime = ''
-            self.StudyInstanceUID = ''
-            self.NumberOfStudyRelatedSeries = ''
-            self.StationName = ''
-            self.SpecificCharacterSet = ''
-            self.ModalitiesInStudy = ''
-            self.Manufacturer = ''
-            self.ManufacturerModelName = ''
-            self.InstitutionName = ''
-    
+            tags = self.searchable_tags['study']
         if query_level=='series':
             self.QueryRetrieveLevel = 'SERIES'
-            self.SeriesDescription = ''
-            self.SeriesNumber = ''
-            self.SeriesInstanceUID = ''
-            self.Modality = ''
-            self.NumberOfSeriesRelatedInstances = ''
-            self.StationName = ''
-            self.SpecificCharacterSet = ''
-            self.SeriesDate = ''
-            self.AccessionNumber = ''
-            self.SeriesTime = ''
-            self.Manufacturer = ''
-            self.ManufacturerModelName = ''
-            self.SOPClassUID = ''
+            tags = self.searchable_tags['series']
     
-        if query_level=='image':
+        if query_level in ['image', 'instance']:
             self.QueryRetrieveLevel = "IMAGE"
-            #Required
-            self.SeriesInstanceUID = ''
-            #Optional
-            self.StudyInstanceUID = ''
-            self.SOPInstanceUID = ''
-            self.AccessionNumber = ''
-            self.StationName = ''
-            self.SeriesDate = ''
-            self.SeriesTime = ''
-            self.SOPClassUID = ''
-            self.InstanceNumber = ''
-            self.SpecificCharacterSet = ''
-            self.StudyInstanceUID = ''
+            tags = self.searchable_tags['instance']
+
     
         if query_level=='patient': #todo find optional tags
             self.QueryRetrieveLevel = 'PATIENT'
-            self.PatientName = ''
-            self.PatientSex = ''
-            self.PatientID = ''
-            self.AccessionNumber = ''
- 
+            tags = self.searchable_tags['patient']
+
+        for tag in tags:
+            self.write_tag_by_keyword(tag, '') 
+
+
     def write_tag_by_keyword(self, keyword, value):
         tag = pydicom.datadict.tag_for_keyword(keyword)
         #ttag = pydicom.tag.Tag('StudyInstanceUID')
@@ -459,6 +485,31 @@ class SearchSet(pydicom.Dataset):
     
     def copy(self):
         return copy.deepcopy(self)
+    
+    def drill_down(self, i=None):
+        if i is None:
+            print(self.result)
+            
+            i = int(input('Select index of item to drill down -> '))
+        drill_result = self.result.loc[i,:]
+        if self.QueryRetrieveLevel == 'STUDY':
+            search_tag = {'StudyInstanceUID':drill_result.StudyInstanceUID}
+            level = 'series'
+        elif self.QueryRetrieveLevel == 'SERIES':
+            level = 'instance'
+            search_tag = {'StudyInstanceUID':drill_result.StudyInstanceUID,
+                          'SeriesInstanceUID':drill_result.SeriesInstanceUID}
+        elif self.QueryRetrieveLevel == 'IMAGE':
+            raise(ValueError("Can't drill down from image level"))
+        else:
+            raise(ValueError("Query retrieve level not properly set"))
+        
+        return self._drill(level, search_tag)
+    
+    @classmethod
+    def _drill(cls, level, search_tag):
+        drilled = cls(level, **search_tag)
+        return drilled
         
 
 #%% Deprecated dataset functions
@@ -553,14 +604,14 @@ def make_dataset(query_level='series', **kwargs):
 
 
 class RDSR(SearchSet):
-       
-    
+          
     def move_rdsrs(self):
         
         if self.QueryRetrieveLevel == 'STUDY':
-            study_uids = self.result.StudyInstanceUID.loc[self.result.ModalitiesInStudy.apply(lambda x: 'SR' in x)]
-            for study_uid in study_uids:
-                r = RDSR('series', StudyInstanceUID = study_uid)
+            study_with_srs = (self.result.ModalitiesInStudy.explode()=='SR').index
+            #study_uids = self.result.StudyInstanceUID.loc[self.result.ModalitiesInStudy.apply(lambda x: 'SR' in x)]
+            for study_index in study_with_srs:
+                r = self.drill_down(study_index)
                 r.find()
                 r.move_rdsrs()
              
@@ -570,7 +621,7 @@ class RDSR(SearchSet):
             try:
                 #siemens artis
                 rdsr_series_uid = self.result.loc[self.result.Modality=='SR'].SeriesInstanceUID.iloc[0]
-            except ValueError:
+            except IndexError:
                 print('No SRs in study, move failed')
                 return
             series_mover = self.copy()
