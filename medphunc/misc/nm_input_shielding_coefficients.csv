@@ -1,0 +1,652 @@
+radionuclide,fit_method,material,parameter_name,value
+Co57,Nth value layer,Lead,HVL1,0.4
+Cr51,Nth value layer,Lead,HVL1,2.8
+Cs137,Nth value layer,Lead,HVL1,9.4
+F18 (pt),Nth value layer,Lead,HVL1,7.0
+F18 (vial),Nth value layer,Lead,HVL1,7.0
+Ga67 (pt),Nth value layer,Lead,HVL1,1.3
+Ga67 (vial),Nth value layer,Lead,HVL1,1.3
+Ga68 (pt),Nth value layer,Lead,HVL1,7.2
+Ga68 (vial),Nth value layer,Lead,HVL1,7.2
+GeGa (Gen),Nth value layer,Lead,HVL1,7.2
+I123,Nth value layer,Lead,HVL1,0.06
+I131 (pt),Nth value layer,Lead,HVL1,3.9
+I131 (vial),Nth value layer,Lead,HVL1,3.9
+In111,Nth value layer,Lead,HVL1,0.6
+Lu177,Nth value layer,Lead,HVL1,0.6
+MoTc (Gen),Nth value layer,Lead,HVL1,
+Sm153,Nth value layer,Lead,HVL1,0.0876
+Tc99m (pt),Nth value layer,Lead,HVL1,0.4
+Tc99m (vial),Nth value layer,Lead,HVL1,0.4
+Tl201 (pt),Nth value layer,Lead,HVL1,0.3
+Tl201 (vial),Nth value layer,Lead,HVL1,0.3
+Co57,Nth value layer,Lead,HVL2,0.3
+Cr51,Nth value layer,Lead,HVL2,1.8
+Cs137,Nth value layer,Lead,HVL2,6.7
+F18 (pt),Nth value layer,Lead,HVL2,4.5
+F18 (vial),Nth value layer,Lead,HVL2,4.5
+Ga67 (pt),Nth value layer,Lead,HVL2,1.7
+Ga67 (vial),Nth value layer,Lead,HVL2,1.7
+Ga68 (pt),Nth value layer,Lead,HVL2,4.8
+Ga68 (vial),Nth value layer,Lead,HVL2,4.8
+GeGa (Gen),Nth value layer,Lead,HVL2,4.8
+I123,Nth value layer,Lead,HVL2,0.54
+I131 (pt),Nth value layer,Lead,HVL2,3.1
+I131 (vial),Nth value layer,Lead,HVL2,3.1
+In111,Nth value layer,Lead,HVL2,0.9
+Lu177,Nth value layer,Lead,HVL2,0.6
+MoTc (Gen),Nth value layer,Lead,HVL2,
+Sm153,Nth value layer,Lead,HVL2,0.0876
+Tc99m (pt),Nth value layer,Lead,HVL2,0.3
+Tc99m (vial),Nth value layer,Lead,HVL2,0.3
+Tl201 (pt),Nth value layer,Lead,HVL2,0.3
+Tl201 (vial),Nth value layer,Lead,HVL2,0.3
+Co57,Nth value layer,Lead,TVL1,1.0
+Cr51,Nth value layer,Lead,TVL1,7.0
+Cs137,Nth value layer,Lead,TVL1,24.0
+F18 (pt),Nth value layer,Lead,TVL1,17.0
+F18 (vial),Nth value layer,Lead,TVL1,17.0
+Ga67 (pt),Nth value layer,Lead,TVL1,5.8
+Ga67 (vial),Nth value layer,Lead,TVL1,5.8
+Ga68 (pt),Nth value layer,Lead,TVL1,18.0
+Ga68 (vial),Nth value layer,Lead,TVL1,18.0
+GeGa (Gen),Nth value layer,Lead,TVL1,18.0
+I123,Nth value layer,Lead,TVL1,1.4
+I131 (pt),Nth value layer,Lead,TVL1,12.0
+I131 (vial),Nth value layer,Lead,TVL1,12.0
+In111,Nth value layer,Lead,TVL1,2.7
+Lu177,Nth value layer,Lead,TVL1,2.1
+MoTc (Gen),Nth value layer,Lead,TVL1,
+Sm153,Nth value layer,Lead,TVL1,0.432
+Tc99m (pt),Nth value layer,Lead,TVL1,1.1
+Tc99m (vial),Nth value layer,Lead,TVL1,1.1
+Tl201 (pt),Nth value layer,Lead,TVL1,1.0
+Tl201 (vial),Nth value layer,Lead,TVL1,1.0
+Co57,Nth value layer,Lead,HVL2.1,3.7
+Cr51,Nth value layer,Lead,HVL2.1,5.9
+Cs137,Nth value layer,Lead,HVL2.1,20.0
+F18 (pt),Nth value layer,Lead,HVL2.1,14.0
+F18 (vial),Nth value layer,Lead,HVL2.1,14.0
+Ga67 (pt),Nth value layer,Lead,HVL2.1,9.9
+Ga67 (vial),Nth value layer,Lead,HVL2.1,9.9
+Ga68 (pt),Nth value layer,Lead,HVL2.1,19.0
+Ga68 (vial),Nth value layer,Lead,HVL2.1,19.0
+GeGa (Gen),Nth value layer,Lead,HVL2.1,19.0
+I123,Nth value layer,Lead,HVL2.1,12.0
+I131 (pt),Nth value layer,Lead,HVL2.1,17.0
+I131 (vial),Nth value layer,Lead,HVL2.1,17.0
+In111,Nth value layer,Lead,HVL2.1,3.2
+Lu177,Nth value layer,Lead,HVL2.1,2.1
+MoTc (Gen),Nth value layer,Lead,HVL2.1,
+Sm153,Nth value layer,Lead,HVL2.1,0.432
+Tc99m (pt),Nth value layer,Lead,HVL2.1,1.0
+Tc99m (vial),Nth value layer,Lead,HVL2.1,1.0
+Tl201 (pt),Nth value layer,Lead,HVL2.1,1.1
+Tl201 (vial),Nth value layer,Lead,HVL2.1,1.1
+Co57,Nth value layer,Concrete,HVL1,8.7
+Cr51,Nth value layer,Concrete,HVL1,11.9
+Cs137,Nth value layer,Concrete,HVL1,12.1
+F18 (pt),Nth value layer,Concrete,HVL1,12.1
+F18 (vial),Nth value layer,Concrete,HVL1,12.1
+Ga67 (pt),Nth value layer,Concrete,HVL1,10.3
+Ga67 (vial),Nth value layer,Concrete,HVL1,10.3
+Ga68 (pt),Nth value layer,Concrete,HVL1,12.3
+Ga68 (vial),Nth value layer,Concrete,HVL1,12.3
+GeGa (Gen),Nth value layer,Concrete,HVL1,12.3
+I123,Nth value layer,Concrete,HVL1,5.9
+I131 (pt),Nth value layer,Concrete,HVL1,11.8
+I131 (vial),Nth value layer,Concrete,HVL1,11.8
+In111,Nth value layer,Concrete,HVL1,8.5
+Lu177,Nth value layer,Concrete,HVL1,5.8
+MoTc (Gen),Nth value layer,Concrete,HVL1,
+Sm153,Nth value layer,Concrete,HVL1,5.55
+Tc99m (pt),Nth value layer,Concrete,HVL1,8.4
+Tc99m (vial),Nth value layer,Concrete,HVL1,8.4
+Tl201 (pt),Nth value layer,Concrete,HVL1,5.6
+Tl201 (vial),Nth value layer,Concrete,HVL1,5.6
+Co57,Nth value layer,Concrete,HVL2,2.7
+Cr51,Nth value layer,Concrete,HVL2,4.5
+Cs137,Nth value layer,Concrete,HVL2,6.2
+F18 (pt),Nth value layer,Concrete,HVL2,5.6
+F18 (vial),Nth value layer,Concrete,HVL2,5.6
+Ga67 (pt),Nth value layer,Concrete,HVL2,4.1
+Ga67 (vial),Nth value layer,Concrete,HVL2,4.1
+Ga68 (pt),Nth value layer,Concrete,HVL2,6.6
+Ga68 (vial),Nth value layer,Concrete,HVL2,6.6
+GeGa (Gen),Nth value layer,Concrete,HVL2,6.6
+I123,Nth value layer,Concrete,HVL2,4.1
+I131 (pt),Nth value layer,Concrete,HVL2,5.0
+I131 (vial),Nth value layer,Concrete,HVL2,5.0
+In111,Nth value layer,Concrete,HVL2,4.0
+Lu177,Nth value layer,Concrete,HVL2,5.8
+MoTc (Gen),Nth value layer,Concrete,HVL2,
+Sm153,Nth value layer,Concrete,HVL2,5.55
+Tc99m (pt),Nth value layer,Concrete,HVL2,3.0
+Tc99m (vial),Nth value layer,Concrete,HVL2,3.0
+Tl201 (pt),Nth value layer,Concrete,HVL2,2.7
+Tl201 (vial),Nth value layer,Concrete,HVL2,2.7
+Co57,Nth value layer,Concrete,TVL1,14.8
+Cr51,Nth value layer,Concrete,TVL1,21.6
+Cs137,Nth value layer,Concrete,TVL1,25.5
+F18 (pt),Nth value layer,Concrete,TVL1,24.0
+F18 (vial),Nth value layer,Concrete,TVL1,24.0
+Ga67 (pt),Nth value layer,Concrete,TVL1,19.4
+Ga67 (vial),Nth value layer,Concrete,TVL1,19.4
+Ga68 (pt),Nth value layer,Concrete,TVL1,26.4
+Ga68 (vial),Nth value layer,Concrete,TVL1,26.4
+GeGa (Gen),Nth value layer,Concrete,TVL1,26.4
+I123,Nth value layer,Concrete,TVL1,14.5
+I131 (pt),Nth value layer,Concrete,TVL1,22.6
+I131 (vial),Nth value layer,Concrete,TVL1,22.6
+In111,Nth value layer,Concrete,TVL1,17.1
+Lu177,Nth value layer,Concrete,TVL1,15.5
+MoTc (Gen),Nth value layer,Concrete,TVL1,
+Sm153,Nth value layer,Concrete,TVL1,11.0
+Tc99m (pt),Nth value layer,Concrete,TVL1,15.1
+Tc99m (vial),Nth value layer,Concrete,TVL1,15.1
+Tl201 (pt),Nth value layer,Concrete,TVL1,11.8
+Tl201 (vial),Nth value layer,Concrete,TVL1,11.8
+Co57,Nth value layer,Concrete,TVL2,8.2
+Cr51,Nth value layer,Concrete,TVL2,12.0
+Cs137,Nth value layer,Concrete,TVL2,16.0
+F18 (pt),Nth value layer,Concrete,TVL2,14.4
+F18 (vial),Nth value layer,Concrete,TVL2,14.4
+Ga67 (pt),Nth value layer,Concrete,TVL2,11.8
+Ga67 (vial),Nth value layer,Concrete,TVL2,11.8
+Ga68 (pt),Nth value layer,Concrete,TVL2,17.2
+Ga68 (vial),Nth value layer,Concrete,TVL2,17.2
+GeGa (Gen),Nth value layer,Concrete,TVL2,17.2
+I123,Nth value layer,Concrete,TVL2,10.5
+I131 (pt),Nth value layer,Concrete,TVL2,13.4
+I131 (vial),Nth value layer,Concrete,TVL2,13.4
+In111,Nth value layer,Concrete,TVL2,10.5
+Lu177,Nth value layer,Concrete,TVL2,15.5
+MoTc (Gen),Nth value layer,Concrete,TVL2,
+Sm153,Nth value layer,Concrete,TVL2,11.0
+Tc99m (pt),Nth value layer,Concrete,TVL2,8.3
+Tc99m (vial),Nth value layer,Concrete,TVL2,8.3
+Tl201 (pt),Nth value layer,Concrete,TVL2,8.9
+Tl201 (vial),Nth value layer,Concrete,TVL2,8.9
+Co57,Archer,Lead,alpha,
+Cr51,Archer,Lead,alpha,
+Cs137,Archer,Lead,alpha,
+F18 (pt),Archer,Lead,alpha,0.1543
+F18 (vial),Archer,Lead,alpha,0.1543
+Ga67 (pt),Archer,Lead,alpha,0.04412
+Ga67 (vial),Archer,Lead,alpha,0.04412
+Ga68 (pt),Archer,Lead,alpha,0.01543
+Ga68 (vial),Archer,Lead,alpha,0.01543
+GeGa (Gen),Archer,Lead,alpha,0.01543
+I123,Archer,Lead,alpha,0.1322
+I131 (pt),Archer,Lead,alpha,0.1078
+I131 (vial),Archer,Lead,alpha,0.1078
+In111,Archer,Lead,alpha,0.7094
+Lu177,Archer,Lead,alpha,
+MoTc (Gen),Archer,Lead,alpha,
+Sm153,Archer,Lead,alpha,
+Tc99m (pt),Archer,Lead,alpha,2.479
+Tc99m (vial),Archer,Lead,alpha,2.479
+Tl201 (pt),Archer,Lead,alpha,1.67
+Tl201 (vial),Archer,Lead,alpha,1.67
+Co57,Archer,Lead,beta,
+Cr51,Archer,Lead,beta,
+Cs137,Archer,Lead,beta,
+F18 (pt),Archer,Lead,beta,-0.04408
+F18 (vial),Archer,Lead,beta,-0.04408
+Ga67 (pt),Archer,Lead,beta,0.7326
+Ga67 (vial),Archer,Lead,beta,0.7326
+Ga68 (pt),Archer,Lead,beta,-0.004408
+Ga68 (vial),Archer,Lead,beta,-0.004408
+GeGa (Gen),Archer,Lead,beta,-0.004408
+I123,Archer,Lead,beta,14.85
+I131 (pt),Archer,Lead,beta,0.2033
+I131 (vial),Archer,Lead,beta,0.2033
+In111,Archer,Lead,beta,30.63
+Lu177,Archer,Lead,beta,
+MoTc (Gen),Archer,Lead,beta,
+Sm153,Archer,Lead,beta,
+Tc99m (pt),Archer,Lead,beta,-1.093
+Tc99m (vial),Archer,Lead,beta,-1.093
+Tl201 (pt),Archer,Lead,beta,1.358
+Tl201 (vial),Archer,Lead,beta,1.358
+Co57,Archer,Lead,gamma,
+Cr51,Archer,Lead,gamma,
+Cs137,Archer,Lead,gamma,
+F18 (pt),Archer,Lead,gamma,0.2136
+F18 (vial),Archer,Lead,gamma,0.2136
+Ga67 (pt),Archer,Lead,gamma,0.3869
+Ga67 (vial),Archer,Lead,gamma,0.3869
+Ga68 (pt),Archer,Lead,gamma,0.02136
+Ga68 (vial),Archer,Lead,gamma,0.02136
+GeGa (Gen),Archer,Lead,gamma,0.02136
+I123,Archer,Lead,gamma,1.488
+I131 (pt),Archer,Lead,gamma,0.4957
+I131 (vial),Archer,Lead,gamma,0.4957
+In111,Archer,Lead,gamma,5.979
+Lu177,Archer,Lead,gamma,
+MoTc (Gen),Archer,Lead,gamma,
+Sm153,Archer,Lead,gamma,
+Tc99m (pt),Archer,Lead,gamma,1.376
+Tc99m (vial),Archer,Lead,gamma,1.376
+Tl201 (pt),Archer,Lead,gamma,0.3692
+Tl201 (vial),Archer,Lead,gamma,0.3692
+Co57,Archer,Concrete,alpha,
+Cr51,Archer,Concrete,alpha,
+Cs137,Archer,Concrete,alpha,
+F18 (pt),Archer,Concrete,alpha,0.1539
+F18 (vial),Archer,Concrete,alpha,0.1539
+Ga67 (pt),Archer,Concrete,alpha,0.1865
+Ga67 (vial),Archer,Concrete,alpha,0.1865
+Ga68 (pt),Archer,Concrete,alpha,0.1539
+Ga68 (vial),Archer,Concrete,alpha,0.1539
+GeGa (Gen),Archer,Concrete,alpha,0.1539
+I123,Archer,Concrete,alpha,0.1866
+I131 (pt),Archer,Concrete,alpha,0.1705
+I131 (vial),Archer,Concrete,alpha,0.1705
+In111,Archer,Concrete,alpha,0.2339
+Lu177,Archer,Concrete,alpha,
+MoTc (Gen),Archer,Concrete,alpha,
+Sm153,Archer,Concrete,alpha,
+Tc99m (pt),Archer,Concrete,alpha,0.2813
+Tc99m (vial),Archer,Concrete,alpha,0.2813
+Tl201 (pt),Archer,Concrete,alpha,0.2607
+Tl201 (vial),Archer,Concrete,alpha,0.2607
+Co57,Archer,Concrete,beta,
+Cr51,Archer,Concrete,beta,
+Cs137,Archer,Concrete,beta,
+F18 (pt),Archer,Concrete,beta,-0.1161
+F18 (vial),Archer,Concrete,beta,-0.1161
+Ga67 (pt),Archer,Concrete,beta,-0.1529
+Ga67 (vial),Archer,Concrete,beta,-0.1529
+Ga68 (pt),Archer,Concrete,beta,-0.1161
+Ga68 (vial),Archer,Concrete,beta,-0.1161
+GeGa (Gen),Archer,Concrete,beta,-0.1161
+I123,Archer,Concrete,beta,1253.0
+I131 (pt),Archer,Concrete,beta,-0.1308
+I131 (vial),Archer,Concrete,beta,-0.1308
+In111,Archer,Concrete,beta,-0.1265
+Lu177,Archer,Concrete,beta,
+MoTc (Gen),Archer,Concrete,beta,
+Sm153,Archer,Concrete,beta,
+Tc99m (pt),Archer,Concrete,beta,-0.2349
+Tc99m (vial),Archer,Concrete,beta,-0.2349
+Tl201 (pt),Archer,Concrete,beta,-0.2607
+Tl201 (vial),Archer,Concrete,beta,-0.2607
+Co57,Archer,Concrete,gamma,
+Cr51,Archer,Concrete,gamma,
+Cs137,Archer,Concrete,gamma,
+F18 (pt),Archer,Concrete,gamma,2.0752
+F18 (vial),Archer,Concrete,gamma,2.0752
+Ga67 (pt),Archer,Concrete,gamma,1.683
+Ga67 (vial),Archer,Concrete,gamma,1.683
+Ga68 (pt),Archer,Concrete,gamma,2.0752
+Ga68 (vial),Archer,Concrete,gamma,2.0752
+GeGa (Gen),Archer,Concrete,gamma,2.0752
+I123,Archer,Concrete,gamma,74.93
+I131 (pt),Archer,Concrete,gamma,1.038
+I131 (vial),Archer,Concrete,gamma,1.038
+In111,Archer,Concrete,gamma,0.4618
+Lu177,Archer,Concrete,gamma,
+MoTc (Gen),Archer,Concrete,gamma,
+Sm153,Archer,Concrete,gamma,
+Tc99m (pt),Archer,Concrete,gamma,0.9653
+Tc99m (vial),Archer,Concrete,gamma,0.9653
+Tl201 (pt),Archer,Concrete,gamma,20.99
+Tl201 (vial),Archer,Concrete,gamma,20.99
+Co57,Groth,Lead,A1,
+Cr51,Groth,Lead,A1,
+Cs137,Groth,Lead,A1,
+F18 (pt),Groth,Lead,A1,
+F18 (vial),Groth,Lead,A1,
+Ga67 (pt),Groth,Lead,A1,
+Ga67 (vial),Groth,Lead,A1,0.347
+Ga68 (pt),Groth,Lead,A1,
+Ga68 (vial),Groth,Lead,A1,
+GeGa (Gen),Groth,Lead,A1,
+I123,Groth,Lead,A1,
+I131 (pt),Groth,Lead,A1,
+I131 (vial),Groth,Lead,A1,0.08
+In111,Groth,Lead,A1,
+Lu177,Groth,Lead,A1,
+MoTc (Gen),Groth,Lead,A1,0.9095
+Sm153,Groth,Lead,A1,
+Tc99m (pt),Groth,Lead,A1,
+Tc99m (vial),Groth,Lead,A1,1.3734
+Tl201 (pt),Groth,Lead,A1,
+Tl201 (vial),Groth,Lead,A1,0.816
+Co57,Groth,Lead,mu1,
+Cr51,Groth,Lead,mu1,
+Cs137,Groth,Lead,mu1,
+F18 (pt),Groth,Lead,mu1,
+F18 (vial),Groth,Lead,mu1,
+Ga67 (pt),Groth,Lead,mu1,
+Ga67 (vial),Groth,Lead,mu1,2.1661
+Ga68 (pt),Groth,Lead,mu1,
+Ga68 (vial),Groth,Lead,mu1,
+GeGa (Gen),Groth,Lead,mu1,
+I123,Groth,Lead,mu1,
+I131 (pt),Groth,Lead,mu1,
+I131 (vial),Groth,Lead,mu1,0.693
+In111,Groth,Lead,mu1,
+Lu177,Groth,Lead,mu1,
+MoTc (Gen),Groth,Lead,mu1,0.0986
+Sm153,Groth,Lead,mu1,
+Tc99m (pt),Groth,Lead,mu1,
+Tc99m (vial),Groth,Lead,mu1,2.5508
+Tl201 (pt),Groth,Lead,mu1,
+Tl201 (vial),Groth,Lead,mu1,3.1507
+Co57,Groth,Lead,A2,
+Cr51,Groth,Lead,A2,
+Cs137,Groth,Lead,A2,
+F18 (pt),Groth,Lead,A2,
+F18 (vial),Groth,Lead,A2,
+Ga67 (pt),Groth,Lead,A2,
+Ga67 (vial),Groth,Lead,A2,0.31
+Ga68 (pt),Groth,Lead,A2,
+Ga68 (vial),Groth,Lead,A2,
+GeGa (Gen),Groth,Lead,A2,
+I123,Groth,Lead,A2,
+I131 (pt),Groth,Lead,A2,
+I131 (vial),Groth,Lead,A2,0.72
+In111,Groth,Lead,A2,
+Lu177,Groth,Lead,A2,
+MoTc (Gen),Groth,Lead,A2,0.0905
+Sm153,Groth,Lead,A2,
+Tc99m (pt),Groth,Lead,A2,
+Tc99m (vial),Groth,Lead,A2,-0.3734
+Tl201 (pt),Groth,Lead,A2,
+Tl201 (vial),Groth,Lead,A2,0.12
+Co57,Groth,Lead,mu2,
+Cr51,Groth,Lead,mu2,
+Cs137,Groth,Lead,mu2,
+F18 (pt),Groth,Lead,mu2,
+F18 (vial),Groth,Lead,mu2,
+Ga67 (pt),Groth,Lead,mu2,
+Ga67 (vial),Groth,Lead,mu2,0.6931
+Ga68 (pt),Groth,Lead,mu2,
+Ga68 (vial),Groth,Lead,mu2,
+GeGa (Gen),Groth,Lead,mu2,
+I123,Groth,Lead,mu2,
+I131 (pt),Groth,Lead,mu2,
+I131 (vial),Groth,Lead,mu2,0.27
+In111,Groth,Lead,mu2,
+Lu177,Groth,Lead,mu2,
+MoTc (Gen),Groth,Lead,mu2,0.5587
+Sm153,Groth,Lead,mu2,
+Tc99m (pt),Groth,Lead,mu2,
+Tc99m (vial),Groth,Lead,mu2,5.1015
+Tl201 (pt),Groth,Lead,mu2,
+Tl201 (vial),Groth,Lead,mu2,1.0502
+Co57,Groth,Lead,A3,
+Cr51,Groth,Lead,A3,
+Cs137,Groth,Lead,A3,
+F18 (pt),Groth,Lead,A3,
+F18 (vial),Groth,Lead,A3,
+Ga67 (pt),Groth,Lead,A3,
+Ga67 (vial),Groth,Lead,A3,0.33
+Ga68 (pt),Groth,Lead,A3,
+Ga68 (vial),Groth,Lead,A3,
+GeGa (Gen),Groth,Lead,A3,
+I123,Groth,Lead,A3,
+I131 (pt),Groth,Lead,A3,
+I131 (vial),Groth,Lead,A3,0.2
+In111,Groth,Lead,A3,
+Lu177,Groth,Lead,A3,
+MoTc (Gen),Groth,Lead,A3,0.0
+Sm153,Groth,Lead,A3,
+Tc99m (pt),Groth,Lead,A3,
+Tc99m (vial),Groth,Lead,A3,0.0
+Tl201 (pt),Groth,Lead,A3,
+Tl201 (vial),Groth,Lead,A3,0.064
+Co57,Groth,Lead,mu3,
+Cr51,Groth,Lead,mu3,
+Cs137,Groth,Lead,mu3,
+F18 (pt),Groth,Lead,mu3,
+F18 (vial),Groth,Lead,mu3,
+Ga67 (pt),Groth,Lead,mu3,
+Ga67 (vial),Groth,Lead,mu3,0.2829
+Ga68 (pt),Groth,Lead,mu3,
+Ga68 (vial),Groth,Lead,mu3,
+GeGa (Gen),Groth,Lead,mu3,
+I123,Groth,Lead,mu3,
+I131 (pt),Groth,Lead,mu3,
+I131 (vial),Groth,Lead,mu3,0.018
+In111,Groth,Lead,mu3,
+Lu177,Groth,Lead,mu3,
+MoTc (Gen),Groth,Lead,mu3,0.0
+Sm153,Groth,Lead,mu3,
+Tc99m (pt),Groth,Lead,mu3,
+Tc99m (vial),Groth,Lead,mu3,0.0
+Tl201 (pt),Groth,Lead,mu3,
+Tl201 (vial),Groth,Lead,mu3,0.0788
+Co57,Groth,Lead,A4,
+Cr51,Groth,Lead,A4,
+Cs137,Groth,Lead,A4,
+F18 (pt),Groth,Lead,A4,
+F18 (vial),Groth,Lead,A4,
+Ga67 (pt),Groth,Lead,A4,
+Ga67 (vial),Groth,Lead,A4,0.013
+Ga68 (pt),Groth,Lead,A4,
+Ga68 (vial),Groth,Lead,A4,
+GeGa (Gen),Groth,Lead,A4,
+I123,Groth,Lead,A4,
+I131 (pt),Groth,Lead,A4,
+I131 (vial),Groth,Lead,A4,0.0
+In111,Groth,Lead,A4,
+Lu177,Groth,Lead,A4,
+MoTc (Gen),Groth,Lead,A4,0.0
+Sm153,Groth,Lead,A4,
+Tc99m (pt),Groth,Lead,A4,
+Tc99m (vial),Groth,Lead,A4,0.0
+Tl201 (pt),Groth,Lead,A4,
+Tl201 (vial),Groth,Lead,A4,0.0
+Co57,Groth,Lead,mu4,
+Cr51,Groth,Lead,mu4,
+Cs137,Groth,Lead,mu4,
+F18 (pt),Groth,Lead,mu4,
+F18 (vial),Groth,Lead,mu4,
+Ga67 (pt),Groth,Lead,mu4,
+Ga67 (vial),Groth,Lead,mu4,0.0866
+Ga68 (pt),Groth,Lead,mu4,
+Ga68 (vial),Groth,Lead,mu4,
+GeGa (Gen),Groth,Lead,mu4,
+I123,Groth,Lead,mu4,
+I131 (pt),Groth,Lead,mu4,
+I131 (vial),Groth,Lead,mu4,0.0
+In111,Groth,Lead,mu4,
+Lu177,Groth,Lead,mu4,
+MoTc (Gen),Groth,Lead,mu4,0.0
+Sm153,Groth,Lead,mu4,
+Tc99m (pt),Groth,Lead,mu4,
+Tc99m (vial),Groth,Lead,mu4,0.0
+Tl201 (pt),Groth,Lead,mu4,
+Tl201 (vial),Groth,Lead,mu4,0.0
+Co57,Groth,Concrete,A1,
+Cr51,Groth,Concrete,A1,
+Cs137,Groth,Concrete,A1,
+F18 (pt),Groth,Concrete,A1,
+F18 (vial),Groth,Concrete,A1,
+Ga67 (pt),Groth,Concrete,A1,
+Ga67 (vial),Groth,Concrete,A1,1.4073
+Ga68 (pt),Groth,Concrete,A1,
+Ga68 (vial),Groth,Concrete,A1,
+GeGa (Gen),Groth,Concrete,A1,
+I123,Groth,Concrete,A1,
+I131 (pt),Groth,Concrete,A1,
+I131 (vial),Groth,Concrete,A1,1.2667
+In111,Groth,Concrete,A1,
+Lu177,Groth,Concrete,A1,
+MoTc (Gen),Groth,Concrete,A1,0.8023
+Sm153,Groth,Concrete,A1,
+Tc99m (pt),Groth,Concrete,A1,
+Tc99m (vial),Groth,Concrete,A1,1.6944
+Tl201 (pt),Groth,Concrete,A1,
+Tl201 (vial),Groth,Concrete,A1,0.62
+Co57,Groth,Concrete,mu1,
+Cr51,Groth,Concrete,mu1,
+Cs137,Groth,Concrete,mu1,
+F18 (pt),Groth,Concrete,mu1,
+F18 (vial),Groth,Concrete,mu1,
+Ga67 (pt),Groth,Concrete,mu1,
+Ga67 (vial),Groth,Concrete,mu1,0.0185
+Ga68 (pt),Groth,Concrete,mu1,
+Ga68 (vial),Groth,Concrete,mu1,
+GeGa (Gen),Groth,Concrete,mu1,
+I123,Groth,Concrete,mu1,
+I131 (pt),Groth,Concrete,mu1,
+I131 (vial),Groth,Concrete,mu1,0.0144
+In111,Groth,Concrete,mu1,
+Lu177,Groth,Concrete,mu1,
+MoTc (Gen),Groth,Concrete,mu1,0.0126
+Sm153,Groth,Concrete,mu1,
+Tc99m (pt),Groth,Concrete,mu1,
+Tc99m (vial),Groth,Concrete,mu1,0.0242
+Tl201 (pt),Groth,Concrete,mu1,
+Tl201 (vial),Groth,Concrete,mu1,0.0338
+Co57,Groth,Concrete,A2,
+Cr51,Groth,Concrete,A2,
+Cs137,Groth,Concrete,A2,
+F18 (pt),Groth,Concrete,A2,
+F18 (vial),Groth,Concrete,A2,
+Ga67 (pt),Groth,Concrete,A2,
+Ga67 (vial),Groth,Concrete,A2,-0.4073
+Ga68 (pt),Groth,Concrete,A2,
+Ga68 (vial),Groth,Concrete,A2,
+GeGa (Gen),Groth,Concrete,A2,
+I123,Groth,Concrete,A2,
+I131 (pt),Groth,Concrete,A2,
+I131 (vial),Groth,Concrete,A2,-0.2667
+In111,Groth,Concrete,A2,
+Lu177,Groth,Concrete,A2,
+MoTc (Gen),Groth,Concrete,A2,0.1977
+Sm153,Groth,Concrete,A2,
+Tc99m (pt),Groth,Concrete,A2,
+Tc99m (vial),Groth,Concrete,A2,-0.6944
+Tl201 (pt),Groth,Concrete,A2,
+Tl201 (vial),Groth,Concrete,A2,0.38
+Co57,Groth,Concrete,mu2,
+Cr51,Groth,Concrete,mu2,
+Cs137,Groth,Concrete,mu2,
+F18 (pt),Groth,Concrete,mu2,
+F18 (vial),Groth,Concrete,mu2,
+Ga67 (pt),Groth,Concrete,mu2,
+Ga67 (vial),Groth,Concrete,mu2,0.0371
+Ga68 (pt),Groth,Concrete,mu2,
+Ga68 (vial),Groth,Concrete,mu2,
+GeGa (Gen),Groth,Concrete,mu2,
+I123,Groth,Concrete,mu2,
+I131 (pt),Groth,Concrete,mu2,
+I131 (vial),Groth,Concrete,mu2,0.04
+In111,Groth,Concrete,mu2,
+Lu177,Groth,Concrete,mu2,
+MoTc (Gen),Groth,Concrete,mu2,0.0335
+Sm153,Groth,Concrete,mu2,
+Tc99m (pt),Groth,Concrete,mu2,
+Tc99m (vial),Groth,Concrete,mu2,0.04
+Tl201 (pt),Groth,Concrete,mu2,
+Tl201 (vial),Groth,Concrete,mu2,0.0161
+Co57,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Cr51,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Cs137,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+F18 (pt),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+F18 (vial),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Ga67 (pt),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Ga67 (vial),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Ga68 (pt),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Ga68 (vial),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+GeGa (Gen),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+I123,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+I131 (pt),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+I131 (vial),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+In111,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Lu177,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+MoTc (Gen),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Sm153,Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Tc99m (pt),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Tc99m (vial),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Tl201 (pt),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Tl201 (vial),Unnamed: 27_level_0,Unnamed: 27_level_1,mu3,
+Co57,Half Life,Half Life,HalfLife,271.81
+Cr51,Half Life,Half Life,HalfLife,27.704
+Cs137,Half Life,Half Life,HalfLife,30.05
+F18 (pt),Half Life,Half Life,HalfLife,1.8289
+F18 (vial),Half Life,Half Life,HalfLife,1.8289
+Ga67 (pt),Half Life,Half Life,HalfLife,3.2613
+Ga67 (vial),Half Life,Half Life,HalfLife,3.2613
+Ga68 (pt),Half Life,Half Life,HalfLife,67.83
+Ga68 (vial),Half Life,Half Life,HalfLife,67.83
+GeGa (Gen),Half Life,Half Life,HalfLife,271.0
+I123,Half Life,Half Life,HalfLife,13.2234
+I131 (pt),Half Life,Half Life,HalfLife,8.0233
+I131 (vial),Half Life,Half Life,HalfLife,8.0233
+In111,Half Life,Half Life,HalfLife,2.8049
+Lu177,Half Life,Half Life,HalfLife,6.647
+MoTc (Gen),Half Life,Half Life,HalfLife,66.0
+Sm153,Half Life,Half Life,HalfLife,1.92855
+Tc99m (pt),Half Life,Half Life,HalfLife,6.0067
+Tc99m (vial),Half Life,Half Life,HalfLife,6.0067
+Tl201 (pt),Half Life,Half Life,HalfLife,3.0421
+Tl201 (vial),Half Life,Half Life,HalfLife,3.0421
+Co57,Half Life,Half Life,units,days
+Cr51,Half Life,Half Life,units,days
+Cs137,Half Life,Half Life,units,years
+F18 (pt),Half Life,Half Life,units,hours
+F18 (vial),Half Life,Half Life,units,hours
+Ga67 (pt),Half Life,Half Life,units,days
+Ga67 (vial),Half Life,Half Life,units,days
+Ga68 (pt),Half Life,Half Life,units,mins
+Ga68 (vial),Half Life,Half Life,units,mins
+GeGa (Gen),Half Life,Half Life,units,days
+I123,Half Life,Half Life,units,hours
+I131 (pt),Half Life,Half Life,units,days
+I131 (vial),Half Life,Half Life,units,days
+In111,Half Life,Half Life,units,days
+Lu177,Half Life,Half Life,units,days
+MoTc (Gen),Half Life,Half Life,units,hours
+Sm153,Half Life,Half Life,units,days
+Tc99m (pt),Half Life,Half Life,units,hours
+Tc99m (vial),Half Life,Half Life,units,hours
+Tl201 (pt),Half Life,Half Life,units,days
+Tl201 (vial),Half Life,Half Life,units,days
+Co57,Half Life,Half Life,hrs,6523.44
+Cr51,Half Life,Half Life,hrs,664.9
+Cs137,Half Life,Half Life,hrs,263238.0
+F18 (pt),Half Life,Half Life,hrs,1.83
+F18 (vial),Half Life,Half Life,hrs,1.83
+Ga67 (pt),Half Life,Half Life,hrs,78.27
+Ga67 (vial),Half Life,Half Life,hrs,78.27
+Ga68 (pt),Half Life,Half Life,hrs,1.13
+Ga68 (vial),Half Life,Half Life,hrs,1.13
+GeGa (Gen),Half Life,Half Life,hrs,6504.0
+I123,Half Life,Half Life,hrs,13.22
+I131 (pt),Half Life,Half Life,hrs,192.56
+I131 (vial),Half Life,Half Life,hrs,192.56
+In111,Half Life,Half Life,hrs,67.32
+Lu177,Half Life,Half Life,hrs,159.53
+MoTc (Gen),Half Life,Half Life,hrs,66.0
+Sm153,Half Life,Half Life,hrs,46.29
+Tc99m (pt),Half Life,Half Life,hrs,6.01
+Tc99m (vial),Half Life,Half Life,hrs,6.01
+Tl201 (pt),Half Life,Half Life,hrs,73.01
+Tl201 (vial),Half Life,Half Life,hrs,73.01
+Co57,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0146
+Cr51,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0042
+Cs137,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0892
+F18 (pt),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.092
+F18 (vial),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.143
+Ga67 (pt),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0209
+Ga67 (vial),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.027
+Ga68 (pt),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.092
+Ga68 (vial),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.134
+GeGa (Gen),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0
+I123,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0416
+I131 (pt),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0574
+I131 (vial),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.067
+In111,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0831
+Lu177,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0047
+MoTc (Gen),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,#REF!
+Sm153,Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0122
+Tc99m (pt),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.0161
+Tc99m (vial),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.021
+Tl201 (pt),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.01129
+Tl201 (vial),Dose Rate Constant,"uSv.m^2/MBq.hr [2,4,5]",DRC,0.016
