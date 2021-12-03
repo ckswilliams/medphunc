@@ -29,7 +29,10 @@ def extract_metadata(d):
     return output
 
 def parse_single_dcm(fn):
-    d = pydicom.read_file(fn)
+    if not isinstance(fn, pydicom.dataset.FileDataset):
+        d = pydicom.read_file(fn)
+    else:
+        d = fn
     output = extract_metadata(d)
     df = pd.DataFrame.from_dict(output, orient='index')
     df.columns = ['value']
