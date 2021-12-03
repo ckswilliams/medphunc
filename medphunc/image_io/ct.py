@@ -14,6 +14,7 @@ from collections import Counter
 import pathlib
 import os
 
+from typing import List
 
 import logging
 logger = logging.getLogger(__name__)
@@ -64,18 +65,21 @@ def load_ct_folder(folder, return_tags='middle'):
         files.append(pydicom.read_file(fpath))
     
     logger.info("file count: {}".format(len(files)))
+    return load_ct_dicoms(files, return_tags)
+
     
+def load_ct_dicoms(dicoms: List[pydicom.Dataset], return_tags='middle'):
     # skip files with no SliceLocation (eg scout views)
     slices = []
     skipcount = 0
-    for f in files:
+    for f in dicoms:
         if hasattr(f, 'InstanceNumber') and hasattr(f, 'PixelData'):
             slices.append(f)
         else:
             skipcount = skipcount + 1
     
     if len(slices) == 0:
-        raise(FileNotFoundError('No dicom image files found in %s', folder))
+        raise(FileNotFoundError('No dicom image files found in supplied dicom files'))
     
     logger.info("skipped, no SliceLocation: {}".format(skipcount))
     
@@ -114,7 +118,7 @@ def load_ct_folder(folder, return_tags='middle'):
             logger.debug('found file with wrong pixel array size, skipping')
         
     #Rescale the metadata according to the intercept
-    img3d = rescale_ct_image(img3d, files[0].RescaleSlope, files[0].RescaleIntercept)
+    img3d = rescale_ct_image(img3d, dicoms[0].RescaleSlope, dicoms[0].RescaleIntercept)
         
     if return_tags == 'middle':
         return_d = slices[len(slices)//2]
