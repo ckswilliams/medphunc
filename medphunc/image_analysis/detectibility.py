@@ -10,44 +10,16 @@ from matplotlib import pyplot as plt
 import numpy as np
 import typing
 
+#from medphunc.image_analysis import nnps
+#from medphunc.image_analysis import image_utility as iu
+from medphunc.image_analysis import clinical_mtf, clinical_nps
 
-from medphunc.image_io import ct
-from medphunc.image_analysis import nnps
-from medphunc.image_analysis import image_utility as iu
-from medphunc.image_analysis import clinical_mtf
-from medphunc.image_analysis import nnps
-from scipy.ndimage import binary_fill_holes, binary_erosion
+import pydicom
 
-
-
-
-#%% not currently used. clinical_mtf is used as a substitute
-
-
-class TaskTransferFunction:
-    obj_dia_mm = 25.0
-    pixel_reduction_factor = 5.0
-    rebin_f_inc = 0.05
-    loess_bandwidth = 0.02
-    loess_robustness = 10
-    loess_on_lsf = False
-    
-    lsf_loess_bandwidth = 0.04
-    lsf_loess_robustness = 10
-    
-    find_com = True
-    
-    
-    
-    use_low_pass = False
-    low_pass_factor = 0.9
-    
-    REBIN = 0
-
+from typing import Type
 
 
 #%%
-
 
 class TaskFunction:
     task_type = "cylinder"
@@ -181,27 +153,49 @@ class EyeRicSie(EyeModel):
         return self.E
     
 #%%
+class Detectibility:
+    nps: dict = None
+    ttf: dict = None
+    eye_model: Type[EyeModel] = None
+    task_function: Type[TaskFunction] = None
+    
+    def __init__(
+            self, nps: dict, ttf: dict,
+            eye_model: Type[EyeModel], task_function: Type[TaskFunction]
+            ):
+        self.nps = nps
+        self.ttf = ttf
+        self.eye_model = eye_model
+        self.task_function=task_function
+        self.common_basis()
+        self.calculate_detectibility()
+    
+    def common_basis(self):
+        self.f_basis = self.task_function.f
+        self.W=self.task_function.W
+        # Interpolate all other functions to have the same frequency index
+        self.E = np.interp(self.f_basis, self.eye_model.f_array, self.eye_model.E)
+        self.TTF = np.interp(self.f_basis, self.ttf['Clinical']['frequency'], self.ttf['Clinical']['MTF'])
+        self.NPS = np.interp(self.f_basis, self.nps['frequency'],self.nps['radial'])
+    
+    def calculate_detectibility(self):
 
-
-
-
-
-
-
-
-
-
-
-nps = nnps.calculate_ct_nnps(im=im[z,], n_regions=16, pixel_size=d.PixelSpacing, radius=nps_radius, region_size=64)
-nps_output=nnps.analyse_nnps(nps, d.PixelSpacing[0])
-
-from medphunc.image_analysis import clinical_mtf
-mtf = clinical_mtf.clinical_mtf_from_dicom_metadata(im,d,profile_pixel_length=30, profile_pixel_spacing=.5)
-plt.plot(mtf['Clinical']['frequency'],mtf['Clinical']['MTF'])
-
-
-
-
-def common_basis(f, v, f_basis):
-    return np.interp(f_basis, f, v)
-
+        # calculate top and bottom of NPWE equation
+        top = (self.W**2 * self.TTF**2*self.E**2)
+        bottom = (self.W**2*self.TTF**2*self.NPS*self.E**4)
+        # integrate and root
+        # Note that 
+        self.d = (top.sum()**2/bottom.sum())**0.5
+        return self.d
+    
+    
+def clinical_detectibility(im: Type[np.ndarray], d: Type[pydicom.Dataset]):
+    
+    
+    ttf = clinical_mtf.clinical_mtf_from_dicom_metadata(im, d)
+    nps = clinical_nps.automate_clinical_nnps(im, d)
+    t = TaskFunction(task_radius=1.5, task_contrast=5, pixel_size=d.PixelSpacing[0])
+    e = EyeSol(t.f)
+    
+    d = Detectibility(nps, ttf, e, t)
+    return d
