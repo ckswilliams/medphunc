@@ -117,7 +117,7 @@ def plot_differences(data, z_specify = None, z_number=None, save_folder = None):
                 if save_folder is not None:
                     fig.savefig(save_folder+f'/kern{data[i]["series_name"]}_z{j}.png')
         
-def save_differences(data, save_folder):
+def save_difference_images(data, save_folder):
     for i in range(len(data)):
         imageio.volwrite(f'{save_folder}/{data[i]["series_name"]}_diffmap.tif', data[i]['difference_map'])
 
@@ -174,7 +174,7 @@ def volume_difference_analysis(folder, baseline_search_term='fbp',
         os.makedirs(output_folder, exist_ok=True)
     plot_differences(data, z_roi, number_plots, output_folder)
     if save_differences:
-        save_differences(data, output_folder)
+        save_difference_images(data, output_folder)
     
     return data, compile_results(data)
     

@@ -144,13 +144,34 @@ def get_planar_region_coords(im,
 
     
 
-def calculate_circular_coords(center, radius, n):
+def calculate_circular_coords(center: list, radius: float, n: int) -> list:
+    """
+    Create a set of coordinates, typically for use in gathering ROIs in a phantom.
+    
+    In the normal image orientation, starts at the 6-o'clock position and goes counter-clockwise.
+
+    Parameters
+    ----------
+    center : tuple
+        Center y,x values.
+    radius : float
+        Radius of the circle.
+    n : TYPE
+        How many coordinates to create.
+
+    Returns
+    -------
+    list
+        List of tuple coordinates [(y,x)].
+
+    """
     k = np.arange(n)/n*np.pi*2
     y = np.int32(radius*np.cos(k)) + center[0]
     x = np.int32(radius*np.sin(k)) + center[1]
     return list(zip(y,x))
 
 def get_ct_region_coords(im, radius = 120, n=16):
+    "Localise a CT phantom and find the circular coordinates for ROI extractions"
     center = localise_phantom(im)['center'][-2:]
     return calculate_circular_coords(center, radius, n)
 
