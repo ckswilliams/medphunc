@@ -84,8 +84,8 @@ k.shielding_to_transmission(15.4, 'Lead','I-131')
 #%%
 
 class NM(Archer):
-    #att_coeff_fn = os.path.split(__file__)[0]+'/nm_input_shielding_coefficients.csv'
-    att_coeff_fn = 'nm_input_shielding_coefficients.csv'
+    att_coeff_fn = os.path.split(__file__)[0]+'/nm_input_shielding_coefficients.csv'
+    
     
     def __init__(self):
         self.att_coeff = pd.read_csv(self.att_coeff_fn)
@@ -120,7 +120,7 @@ class NM(Archer):
     def shielding_to_transmission(self, radionuclide, material, thickness):
         coeff = self.get_shielding_coefficients(radionuclide, material, fit_method='Archer')
         a, b, y = coeff['alpha'], coeff['beta'], coeff['gamma']
-        return self.calculate_shielding(a, b, y, thickness)
+        return self.calculate_transmission(a, b, y, thickness)
 
     def transmission_to_shielding(self, radionuclide, material, transmission):
         coeff = self.get_shielding_coefficients(radionuclide, material, fit_method='Archer')
