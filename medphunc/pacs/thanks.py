@@ -167,3 +167,9 @@ class Thank(pi.RDSR):
                 output.append([retrieve_orthanc_series(series_oid) for series_oid in series_oids])
             return output
             #raise(NotImplementedError('Not yet available on a study searchset'))
+    
+    def retrieve_one_instance_all_series(self):
+        sop_uids = list(self.move_one_instance_all_series())
+        sop_uids = list(np.array(sop_uids).flat)
+        return [retrieve_sop_instance(suid) for suid in sop_uids]
+        

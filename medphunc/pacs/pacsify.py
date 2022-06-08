@@ -49,7 +49,7 @@ else:
 
 logger = logging.getLogger(__name__)
 
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 if len(logger.handlers) == 0:
     logger.addHandler(logging.StreamHandler())
@@ -141,13 +141,27 @@ def run_query(generator):
 
 
 #%% storage and ping functions, that use a different instance of ae and assoc
-
-
-def do_store(d):
+store_assoc = None
+def ensure_store_assoc():
+    global store_assoc
+    try:
+        if test_assoc(store_assoc):
+            return store_assoc
+    except:
+        pass
     ae = AE(MY.aet)
     ae.requested_contexts = StoragePresentationContexts
-    assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
-    generator = assoc.send_c_store(d)
+    store_assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
+    if test_assoc(store_assoc):
+        return store_assoc
+    else:
+        print('assoc failed :(')
+        return store_assoc
+    
+
+def do_store(d):
+    ensure_store_assoc()
+    generator = store_assoc.send_c_store(d)
     return run_query(generator)
 
 
@@ -227,6 +241,9 @@ def dfind(d):
         
     """
     x = do_find(d)
+    return process_find_results(x)
+    
+def process_find_results(x):
     if len(x) == 1:
         if x[0][0].Status==0:
             return pd.DataFrame()
@@ -473,7 +490,8 @@ class SearchSet(pydicom.Dataset):
 
     
     def find(self):
-        self.result = dfind(self)
+        self.dcm_result = do_find(self)
+        self.result = process_find_results(self.dcm_result)
         return self.result
         
     def move(self):
@@ -505,6 +523,26 @@ class SearchSet(pydicom.Dataset):
             raise(ValueError("Query retrieve level not properly set"))
         
         return self._drill(level, search_tag)
+    
+    def move_one_instance_all_series(self):
+        "For every result for the current search, drill down to all series and retrieve a single dicom object from each"
+        # If we're on the image level, search and return a single instance
+        if self.QueryRetrieveLevel == 'IMAGE':
+            self.SOPInstanceUID = self.result.SOPInstanceUID[0]
+            logger.debug('At the image level, moving SOP instance %s', self.SOPInstanceUID)
+            print(self)
+            self.move()
+            return self.SOPInstanceUID
+        
+        # If we're not on the image level, drill down
+        logger.debug('Found %s items to drill down to', self.result.shape[0])
+        output = []
+        for i in self.result.index:
+            logger.debug('At the %s level, drilling down to item %s', self.QueryRetrieveLevel, i)
+            ss = self.drill_down(i)
+            ss.find()
+            output.append(ss.move_one_instance_all_series())
+        return output
     
     @classmethod
     def _drill(cls, level, search_tag):
