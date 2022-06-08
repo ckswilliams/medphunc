@@ -70,7 +70,7 @@ def split_unit_cols(df):
 
 
 def rdsr_items_to_df(rdsr_items):
-    df = pd.DataFrame(rdsr_items)
+    df = pd.DataFrame(pd.Series(rdsr_items)).T
     df = dp.find_explode_dict_to_columns(df)
     df = split_unit_cols(df)
     df = df[df.columns.sort_values()]
@@ -78,7 +78,11 @@ def rdsr_items_to_df(rdsr_items):
 
 def rdsr_dose_data_to_df(rdsr):
     rdsr_items = rdsr_to_dic(rdsr)
-    df = rdsr_items_to_df(rdsr_items)
+    df = pd.DataFrame(pd.Series(rdsr_items))
+    df = dp.find_explode_dict_to_columns(df)
+    df.columns = df.columns.str.replace('0.', '', regex=False)
+    df = split_unit_cols(df)
+    df = df[df.columns.sort_values()]
     return df
 
 #%%
@@ -103,7 +107,8 @@ def rdsr_meta_data_to_df(rdsr):
         except KeyError:
             output[r.concept_name.code_meaning] = rdsr_line_to_dic(r)
     #Need to turn into a list to match the expected input of function, which is a list of dicts
-    df = rdsr_items_to_df([output])
+#    import pdb; pdb.set_trace()
+    df = rdsr_items_to_df(output)
     return df
 
 #%%

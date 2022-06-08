@@ -16,10 +16,29 @@ Created on Mon Nov 25 09:53:17 2019
 import glob
 import pydicom
 import pandas as pd
+import pathlib
+from typing import Type
 
 #%%
 
-def extract_metadata(d):
+def extract_metadata(d: Type[pydicom.Dataset]) -> dict:
+    """
+    Extract metadata from a pydicom object for the purpose of creating a table
+    for inter-object comparison
+
+    Parameters
+    ----------
+    d : Type[pydicom.Dataset]
+        DESCRIPTION.
+
+    Returns
+    -------
+    dict
+        DESCRIPTION.
+
+    """
+    if not isinstance(d, pydicom.Dataset):
+        raise(ValueError('Defined for pydicom objects only, the input was of type %s', type(d)))
     output = {}
     for item in d:
         if item.name in ['Pixel Data', 'pixel_array']:
@@ -56,8 +75,11 @@ def dicom_files_to_metadata(fns):
     df = pd.DataFrame(output)
     return df
 
-def dicom_folder_to_metadata(folder, suffix='.dcm', recursive=True):
-    fns = glob.glob(folder+'/**/*'+suffix, recursive=recursive)
+def dicom_folder_to_metadata(folder, suffix='.dcm', recursive=True, one_per_folder=False):
+    p = pathlib.Path(folder)
+    fns = list(p.glob('**/*'+suffix))
+    if one_per_folder:
+        fns = {fn.parent:fn for fn in fns}.values()
     df = dicom_files_to_metadata(fns)
     return df
 

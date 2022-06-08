@@ -28,14 +28,20 @@ if len(logger.handlers) < 2:
 
 #%% XML parsing
 
-def expand_dictionary_to_columns(df):
+def expand_dictionary_to_columns(df, column):
     """
     Expand any dictionaries in the specified column of the dataframe, so that 
     each key is converted to a new column.
     """
     logger.debug('Expanding all dictionaries in dataframe')
-    json_struct = json.loads(df.to_json(orient="records"))
-    df = pd.json_normalize(json_struct)
+
+    tdf = df.loc[:,[column]]
+    json_struct = json.loads(tdf.to_json(orient="records"))
+    tdf = pd.json_normalize(json_struct)
+    
+    df = pd.concat([df.loc[:,df.columns!=column], tdf], axis=1)
+    df = df.loc[:,df.columns!=column].copy()
+    return df
     
     ''' Old version, new version is much shorter. Is it faster though?
     dict_row_bool = df[col].apply(lambda x: type(x) == collections.OrderedDict)
@@ -46,8 +52,9 @@ def expand_dictionary_to_columns(df):
     tdf = pd.concat([expanded_dict_col,
                     dict_subset], axis=1)
     df = pd.concat([df.loc[~dict_row_bool,:], tdf], axis = 0).drop(col, axis=1)
-    '''
     return(df)
+    '''
+    
 
 #%%
     ''' deprecated version?
@@ -117,9 +124,10 @@ def find_explode_dict_to_columns(df):
     """
     for column in df.columns:
         test = df[column].apply(lambda x: isinstance(x, collections.Mapping))
+
         if test.any():
             logger.debug('Found dictionary column named %s, exploding all columns', column)
-            return expand_dictionary_to_columns(df).reset_index().iloc[:,1:]
+            df = expand_dictionary_to_columns(df, column)
     return df
 
 #%% Explode and expand, repeatedly
