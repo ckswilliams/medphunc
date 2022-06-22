@@ -28,6 +28,8 @@ import logging
 import json
 import pathlib
 import copy
+
+import os
 #from pynetdicom import debug_logger
 #debug_logger()
 
@@ -58,8 +60,13 @@ if len(logger.handlers) == 0:
 
 #%% AE wrapper class
 
-with open(pathlib.Path(__file__).parent.absolute() / 'aeinfo.json', 'r') as f:
-    savedaeinfo = json.load(f)
+NETWORK_INFO = None
+
+def set_ae_info(fp):
+    global NETWORK_INFO
+    with open(fp, 'r') as f:
+        NETWORK_INFO = json.load(f)
+        
     
 class ae_info:
     def __init__(self, name=None, default=None, 
@@ -83,21 +90,41 @@ class ae_info:
         self.port = port
         
     def set_from_saved(self, name):
-        self.set_ae_info(**savedaeinfo[name])
+        self.set_ae_info(**NETWORK_INFO['dicom'][name])
         
     def set_from_default(self, default):
-        self.set_from_saved(savedaeinfo['default'][default])
+        self.set_from_saved(NETWORK_INFO['dicom']['default'][default])
         
     def interactive_set_ae_from_saved(self):
-        choices = list(savedaeinfo.keys())
+        choices = list(NETWORK_INFO['dicom'].keys())
         for i, k in enumerate(choices):
             print(f'{i} - {k}')
         choice = input('Input an integer:\n')
         self.set_from_saved(choices[int(choice)])
 
-MY = ae_info(default='me')
-REMOTE = ae_info(default='remote')
 
+pacsconfig_path = os.environ.get('MEDPHUNC-PACSCONFIG')
+if not pacsconfig_path:
+    logger.warning("MEDPHUNC-PACSCONFIG environment variable not set - loading aeinfo.json from package directory")
+    set_ae_info(pathlib.Path(__file__).parent.absolute() / 'aeinfo.json')
+else:
+    set_ae_info(pacsconfig_path)
+
+
+MY = ae_info(default='me')
+default_my = os.environ.get('MEDPHUNC-PACSDEFAULT-MY')
+if default_my:
+    MY = ae_info(name=default_my)
+else:
+    logger.warning("MEDPHUNC-PACSDEFAULT-MY environment variable not set - choosing default local AE from definition in config file")
+
+
+REMOTE = ae_info(default='remote')
+default_remote = os.environ.get('MEDPHUNC-PACSDEFAULT-REMOTE')
+if default_remote:
+    REMOTE = ae_info(name=default_remote)
+else:
+    logger.warning("MEDPHUNC-PACSDEFAULT-MY environment variable not set - choosing default local AE from definition in config file")
 assoc = None
 
 #%% Utility functions

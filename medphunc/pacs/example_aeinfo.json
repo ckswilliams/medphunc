@@ -1,12 +1,32 @@
-{"node1":{"aet":"node1",
-"address":"1.2.3.4",
-"port":104},
-"node2":{"aet":"node2",
-"address":"1.2.3.5",
-"port":4242},
-"openrem":{"aet":"OPENREM",
-"address":"2.1.3.1",
-"port":104},
-"default":{"me":"node1",
-"remote":"node2"}
+{
+  "dicom":{
+    "physicspc":{
+      "aet":"MEDPHYS01",
+      "address":"1.1.1.1",
+      "port":104},
+    "openrem":{
+      "aet":"OPENREM",
+      "address":"2.2.2.2",
+      "port":104},
+    "pacs":{
+      "aet":"PACS",
+      "address":"3.3.3.3",
+      "port":104},
+    "default":{
+      "me":"physicspc",
+      "remote":"pacs"}
+  }, 
+  "orthanc":{
+    "imgtlbx":{
+      "url":"http://4.4.4.4:8042",
+      "username": "",
+      "password": ""
+    },
+    "physicspc":{
+      "url":"http://1.1.1.1:8042/",
+      "username": "",
+      "password": ""
+    },
+    "default": "physicspc"
+  }
 }

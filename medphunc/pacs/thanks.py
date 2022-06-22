@@ -12,6 +12,7 @@ import pydicom
 
 from typing import Type, List, Tuple
 import numpy as np 
+import os
 from medphunc.image_io import ct
 
 from medphunc.pacs import pacsify as pi
@@ -26,7 +27,15 @@ class Orthancs(pyorthanc.Orthanc):
     def set_orthanc_url(self, url):
         return Orthancs(url)
     
-orthanc = Orthancs()
+orthanc_config = pi.NETWORK_INFO['orthanc']
+default_orthanc = os.environ.get('MEDPHUNC-ORTHANCDEFAULT')
+if not default_orthanc:
+    default_orthanc = orthanc_config['default']
+orthanc_info = orthanc_config[default_orthanc]
+
+orthanc = Orthancs(orthanc_info['url'])
+if 'username' in orthanc_info:
+    orthanc.setup_credentials(orthanc_info['username'], orthanc_info['password'])
 
 #%%
 
