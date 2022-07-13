@@ -38,7 +38,8 @@ def expand_dictionary_to_columns(df, column):
     tdf = df.loc[:,[column]]
     json_struct = json.loads(tdf.to_json(orient="records"))
     tdf = pd.json_normalize(json_struct)
-    
+    tdf.index = df.index
+
     df = pd.concat([df.loc[:,df.columns!=column], tdf], axis=1)
     df = df.loc[:,df.columns!=column].copy()
     return df
