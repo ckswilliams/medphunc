@@ -48,24 +48,3 @@ def slice_translate(row, col, pixel_spacing, slice_thickness,
 def dcm_slice_translate(row, col, pixel_spacing, slice_thickness, 
                     image_orientation, image_position):
     pass    
-
-
-
-#%%
-
-if __name__ == '__main__':
-
-    pixel_spacing = df.meta[9].PixelSpacing
-    image_orientation = df.meta[9].ImageOrientationPatient
-    image_position = df.meta[9].ImagePositionPatient
-    
-    
-    pplr = calculate_pixel_coordinate(512,723,pixel_spacing,
-                                             image_orientation,
-                                             image_position)
-    
-    ppul = calculate_pixel_coordinate(0,0,pixel_spacing,
-                                             image_orientation,
-                                             image_position)
-    
-    

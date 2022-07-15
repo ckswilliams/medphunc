@@ -7,11 +7,11 @@ Variety of utility functions, mostly for dataframes
 @author: Chris Williams
 """
 
-
-import pandas as pd 
+import pandas as pd
 import numpy as np
 
-#%%
+
+# %%
 
 def series_interp(lookup, value):
     """
@@ -36,15 +36,14 @@ def series_interp(lookup, value):
         return lookup.loc[value]
     except KeyError:
         searchables = pd.DataFrame(index=np.array(value))
-        searchables.loc[:,lookup.columns[0]] = np.nan
+        searchables.loc[:, lookup.columns[0]] = np.nan
         lookup = pd.concat([lookup, searchables], axis=0)
         lookup = lookup.loc[~lookup.index.duplicated(keep='first')]
-        lookup = lookup.interpolate('values') #interpolate using the values strategy
-        return lookup.loc[value].iloc[:,0].copy()
-    
-    
-    
-def search_combine_results(col:pd.Series, search_terms:list) -> pd.DataFrame:
+        lookup = lookup.interpolate('values')  # interpolate using the values strategy
+        return lookup.loc[value].iloc[:, 0].copy()
+
+
+def search_combine_results(col: pd.Series, search_terms: list) -> pd.DataFrame:
     """
     Search a pandas series for each regex string in search terms. Combine the results and return the first hit
 
@@ -64,24 +63,23 @@ def search_combine_results(col:pd.Series, search_terms:list) -> pd.DataFrame:
     """
 
     search_results = []
-    
+
     for search_term in search_terms:
         test = col.str.extract(search_term)[0]
         search_results.append(test)
-    
-    
-    results  = pd.concat(search_results, axis=1)
-    
+
+    results = pd.concat(search_results, axis=1)
+
     combined_results = results.apply(lambda x: x[~x.isna()].head(1), axis=1)
     return combined_results
 
 
-
 def convert_unit(unit):
-    unit_ref={'':1,
-       'm':0.001,
-       'c':0.01}
+    unit_ref = {'': 1,
+                'm': 0.001,
+                'c': 0.01}
     return unit.map(unit_ref)
+
 
 def split_units(unit_strings, seps):
     """
@@ -89,7 +87,7 @@ def split_units(unit_strings, seps):
 
     Parameters
     ----------
-    units : TYPE
+    unit_strings : TYPE
         DESCRIPTION.
     *seps : list of lists
         Each sep should be 3 parts:
@@ -111,38 +109,38 @@ def split_units(unit_strings, seps):
         leftover = split.str[-1]
     return output
 
-    
 
 def dap_unit_conversion(dap_unit, preferred_unit='Gym2'):
-    input_units = split_units(dap_unit, ['Gy\.{0,1}','m'])
+    input_units = split_units(dap_unit, ['Gy\\.{0,1}', 'm'])
     input_magnitudes = [convert_unit(u) for u in input_units]
-    input_mult = input_magnitudes[0]*input_magnitudes[1]**2
-    
-    pref_units = split_units(preferred_unit, ['Gy\.{0,1}','m'])
-    pref_magnitudes = [convert_unit(u) for u in pref_units]
-    pref_mult = (pref_magnitudes[0]*pref_magnitudes[1]**2)[0]
-    
+    input_mult = input_magnitudes[0] * input_magnitudes[1] ** 2
 
-    return input_mult/pref_mult
+    pref_units = split_units(preferred_unit, ["Gy\\.{0,1}", 'm'])
+    pref_magnitudes = [convert_unit(u) for u in pref_units]
+    pref_mult = (pref_magnitudes[0] * pref_magnitudes[1] ** 2)[0]
+
+    return input_mult / pref_mult
+
 
 def dose_unit_conversion(dose_unit, preferred_unit='mGy'):
     input_units = split_units(dose_unit, ['Gy'])
     input_magnitudes = [convert_unit(u) for u in input_units]
     input_mult = input_magnitudes[0]
-    
+
     pref_units = split_units(preferred_unit, ['Gy'])
     pref_magnitudes = [convert_unit(u) for u in pref_units]
     pref_mult = pref_magnitudes[0][0]
-    return input_mult/pref_mult
+    return input_mult / pref_mult
 
-def field_area_from_dose_metrics(dose_gy, dap_gym2, source_detector_distance,source_reference_point_distance):
-    return dap_gym2/dose_gy * (source_detector_distance/source_reference_point_distance)**2
-    
+
+def field_area_from_dose_metrics(dose_gy, dap_gym2, source_detector_distance, source_reference_point_distance):
+    return dap_gym2 / dose_gy * (source_detector_distance / source_reference_point_distance) ** 2
+
+
 def field_area_from_dose_data(dose_data):
     dap = dose_data.dose_area_product * dap_unit_conversion(dose_data.dose_area_product_unit, "Gym2")
     dose = dose_data['dose_(rp)'] * dose_unit_conversion(dose_data['dose_(rp)_unit'], "Gy")
-    
-    field_area = dap / dose * (dose_data.distance_source_to_detector / dose_data.distance_source_to_reference_point)**2
+
+    field_area = dap / dose * (
+                dose_data.distance_source_to_detector / dose_data.distance_source_to_reference_point) ** 2
     return field_area
-    
-    

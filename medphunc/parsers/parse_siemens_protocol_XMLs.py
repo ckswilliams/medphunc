@@ -14,8 +14,7 @@ import generic_dict_parser as dp
 
 #%%
 
-logging.basicConfig(filename="test.log", level=logging.DEBUG)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 #%%
 
@@ -90,21 +89,6 @@ def parse_toshiba_xml(fn):
     return df, recon_columns, scan_columns
 
     
-
-
-
-#%%
-import glob
-fns = glob.glob('C:/Users/WilliamCh/Desktop/ct_protocols/*/*.xml', recursive=True)
-fn = fns[2]
-
-#%%
-
-for i in range(0, df.shape[1]):
-    print(df.iloc[:10,i])
-    print(df.iloc[:,i].unique())
-    input()
-
 
 
 
