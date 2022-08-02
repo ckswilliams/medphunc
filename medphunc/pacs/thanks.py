@@ -182,6 +182,8 @@ class Thank(pi.RDSR):
             # raise(NotImplementedError('Not yet available on a study searchset'))
 
     def retrieve_one_instance_all_series(self):
-        sop_uids = list(self.move_one_instance_all_series())
+        sop_uids = self.move_one_instance_all_series()
+        if type(sop_uids) is str:
+            sop_uids = [sop_uids]
         sop_uids = list(np.array(sop_uids).flat)
         return [retrieve_sop_instance(suid) for suid in sop_uids]

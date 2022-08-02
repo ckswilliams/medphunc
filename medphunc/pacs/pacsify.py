@@ -415,8 +415,10 @@ class SearchSet(pydicom.Dataset):
     drill_result = {}
     drill_merge = pd.DataFrame()
     result = pd.DataFrame()
+    query_level = None
 
     def __init__(self, query_level='series', **kwargs):
+        self.query_level = query_level.lower()
         super().__init__()
         if 'find' in kwargs:
             find = kwargs.pop('find')
@@ -493,7 +495,7 @@ class SearchSet(pydicom.Dataset):
     }
 
     def initialise_searchable_tags(self, query_level):
-        query_level = query_level.lower()
+        query_level = self.query_level
         if query_level == 'study':
             self.QueryRetrieveLevel = 'STUDY'
             tags = self.searchable_tags['study']
@@ -532,8 +534,15 @@ class SearchSet(pydicom.Dataset):
         self.result = process_find_results(self.dcm_result)
         return self.result
 
-    def move(self):
+    def move(self, index=None):
         dd = self.copy()
+        if index is not None:
+            if self.query_level == 'study':
+                dd.StudyInstanceUID = self.result.StudyInstanceUID[index]
+            if self.query_level == 'series':
+                dd.SeriesInstanceUID = self.result.SeriesInstanceUID[index]
+            if self.query_level == 'instance':
+                dd.SOPInstanceUID = self.result.SOPInstanceUID[index]
         for key in self.keys():
             if dd[key].value == '':
                 dd.pop(key)
@@ -548,14 +557,14 @@ class SearchSet(pydicom.Dataset):
 
             i = int(input('Select index of item to drill down -> '))
         drill_result = self.result.loc[i, :]
-        if self.QueryRetrieveLevel == 'STUDY':
+        if self.query_level == 'study':
             search_tag = {'StudyInstanceUID': drill_result.StudyInstanceUID}
             level = 'series'
-        elif self.QueryRetrieveLevel == 'SERIES':
+        elif self.query_level == 'series':
             level = 'instance'
             search_tag = {'StudyInstanceUID': drill_result.StudyInstanceUID,
                           'SeriesInstanceUID': drill_result.SeriesInstanceUID}
-        elif self.QueryRetrieveLevel == 'IMAGE':
+        elif self.query_level == 'instance':
             raise (ValueError("Can't drill down from image level"))
         else:
             raise (ValueError("Query retrieve level not properly set"))
@@ -579,7 +588,7 @@ class SearchSet(pydicom.Dataset):
         "For every result for the current search, drill down to all series and retrieve a single dicom object from each"
         # If we're on the image level, search and return a single instance
         if self.QueryRetrieveLevel == 'IMAGE':
-            self.SOPInstanceUID = self.result.SOPInstanceUID[0]
+            self.SOPInstanceUID = self.result.SOPInstanceUID.iloc[0]
             logger.debug('At the image level, moving SOP instance %s', self.SOPInstanceUID)
             print(self)
             self.move()
