@@ -15,6 +15,7 @@ Default settings for QH included.
 from pydicom import Dataset
 import pydicom
 from pydicom.uid import ExplicitVRLittleEndian, ImplicitVRLittleEndian, ExplicitVRBigEndian
+from pynetdicom.sop_class import XRayRadiationDoseSRStorage
 from pynetdicom import AE
 from pynetdicom import QueryRetrievePresentationContexts
 from pynetdicom import VerificationPresentationContexts
@@ -174,7 +175,8 @@ def ensure_store_assoc():
     except:
         pass
     ae = AE(MY.aet)
-    ae.requested_contexts = StoragePresentationContexts
+    #ae.requested_contexts = StoragePresentationContexts
+    ae.add_requested_context(XRayRadiationDoseSRStorage, ImplicitVRLittleEndian)
     store_assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
     if test_assoc(store_assoc):
         return store_assoc
@@ -575,7 +577,7 @@ class SearchSet(pydicom.Dataset):
             self.drill_result[i]['drill_index'] = i
         return drill_result
 
-    def drill_all(self, find=False):
+    def drill_all(self, find=True):
         drill_all = [self.drill_down(i, find) for i in self.result.index]
         if find and drill_all:
             drill_concat = pd.concat(self.drill_result)
