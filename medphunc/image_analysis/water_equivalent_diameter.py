@@ -107,11 +107,12 @@ class WED:
                 elif 'Head' in dcm.CTDIPhantomTypeCodeSequence[0].CodeMeaning:
                     region='head'
             except AttributeError:
-                if dcm.BodyPartExamined == 'HEAD':
+                if dcm.get('BodyPartExamined') == 'HEAD':
                     region='head'
                 else:
                     region='body'
-                    logger.warning('region not found in dicom and not provided manually - assumed body phantom')
+                    logger.warning('region not found in dicom and not provided'+ 
+                                   ' manually - assumed body phantom')
         elif region not in ['body', 'head']:
             raise(ValueError(f'region must be one of [body,head], {region} was passed'))
             
