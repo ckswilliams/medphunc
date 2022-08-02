@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 
 #%% Class refactor
-class wed:
+class WED:
     """
     Calculate WED from either a single image, or a CT image stack.
     
@@ -69,34 +69,37 @@ class wed:
     threshold = None
     window = None
     region = None
+    method = 'centre'
+    verbose=False
     
-    def __init__(self, im, scale, threshold=-300, window=False, region='body'):
+    def __init__(self, im, scale, threshold=-300,window=False, region='body',
+                 verbose=False, method='center'):
         self.im = im
         self.scale=scale
         self.threshold=threshold
         self.window=window
         self.region=region
+        self.verbose=verbose
+        self.method=method
         self.calculate_wed()
         self.calculate_ssde()
+        
 
     
     @classmethod
     def from_image(cls, im, scale, threshold=-300, window=False, region='body'):
         return cls(im, scale, threshold, window, region)
         
+    
     @classmethod
     def from_folder(cls, folder, threshold=-300, region=None):
         vol, dcm, end_points = ct.load_ct_folder(folder)
-        im = vol[vol.shape[0]//2,]
-        dcm = dcm
-        scale = dcm.PixelSpacing[0]*dcm.PixelSpacing[1]
-        threshold = threshold
-        try:
-            window = (dcm.WindowWidth[0], dcm.WindowCenter[0])
-            
-        except TypeError:
-            window = (80,300)
-        
+        return cls.from_volume(vol, dcm, threshold, region)
+    
+    
+    @classmethod
+    def from_volume(cls, volume, dcm, threshold=-300, region=None, verbose=False, method='centre'):
+
         if region is None:
             try:
                 if 'Body' in dcm.CTDIPhantomTypeCodeSequence[0].CodeMeaning:
@@ -111,13 +114,26 @@ class wed:
                     logger.warning('region not found in dicom and not provided manually - assumed body phantom')
         elif region not in ['body', 'head']:
             raise(ValueError(f'region must be one of [body,head], {region} was passed'))
-        c = cls(im, scale, threshold, window, region)
-        c.dcm = dcm
+            
+        
+        c = cls(volume, np.product(dcm.PixelSpacing), threshold=threshold, region=region, window=None, verbose=verbose, method=method)
+
         return c
     
     
+    @classmethod
+    def from_dicom_objects(cls, dcm_objects, threshold=-300, region=None):
+        im, dcm, end_points = ct.load_ct_dicoms(dcm_objects)
+        return cls.from_volume(im, dcm, threshold, region)
+        
+    
     def calculate_wed(self):
-        self.wed_results = wed_from_image(self.im, self.scale, self.threshold, self.window)
+        if len(self.im.shape) == 3:
+            self.wed_results = wed_from_volume(self.im, self.scale, self.threshold, self.window, self.verbose, self.method)
+            if self.method=='full':
+                self.wed_results['water_equiv_circle_diam'] = self.wed_results['mean_wed']
+        else:
+            self.wed_results = wed_from_image(self.im, self.scale, self.threshold, self.window)
         self.wed = self.wed_results['water_equiv_circle_diam']/10
     
     
@@ -127,7 +143,25 @@ class wed:
     def __repr__(self):
         return f'Water equivalent diameter calculations \nWED: {self.wed} cm\nSSDE: {self.ssde.iloc[0]}'
     
-def wed_from_image(im, scale, threshold = -300, window = False):
+    
+def wed_from_volume(vol, scale, threshold=-300, window=False, verbose=False, method='centre'):
+    if method=='centre':
+        im = vol[vol.shape[0]//2,]
+        output = wed_from_image(im, scale, threshold, window, verbose)
+    elif method=='full':
+        wed_results = []
+        for i in range(vol.shape[0]):
+            wed_results.append(wed_from_image(vol[i,], scale, threshold, window, verbose))
+        weds = np.array([o['water_equiv_circle_diam'] for o in wed_results])
+        output = {'median_wed': np.median(weds),'max_wed': np.max(weds), 'min_wed':np.min(weds), 'mean_wed':np.mean(weds)}
+        if verbose:
+            output['wed_slice_results'] = wed_results
+    else:
+        raise(ValueError('method argument not one of "centre","full" (provided %s)' % method))
+    return output
+    
+    
+def wed_from_image(im, scale, threshold = -300, window = False, verbose=False):
     '''
     Calculate the water equivalent diameter from a CT image.
     
@@ -216,15 +250,16 @@ def wed_from_image(im, scale, threshold = -300, window = False):
         cv2.putText(view_img, "{:.0f} mm^2, circle d = {:.0f} mm".format(hullarea, hullequiv), (100,60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,200,200), 1, cv2.LINE_AA)
     else:
         view_img = False
-
+       
     output = {'area':area,
               'equiv_circle_diam':equiv_circle_diam,
               'water_equiv_area':water_equiv_area,
               'water_equiv_circle_diam':water_equiv_circle_diam,
               'hull_area':hullarea,
-              'hull_equiv':hullequiv,
-              'image_overlay':view_img
+              'hull_equiv':hullequiv
         }
+    if verbose:
+        output['image_overlay']:view_img
     return output
 
 def wed_from_dicom_file(dicom_filename, threshold = -300, window = False):
