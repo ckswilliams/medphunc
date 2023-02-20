@@ -3,6 +3,14 @@
 Created on Wed Jul 25 10:13:54 2018
 Calculate shielding coefficients using archer method
 
+
+Shielding coefficients are based on
+BJR Rdaiation Shielding for Diagnostic Radiology 2nd edition, table 4.1
+kV of 25-49 is from Transmission of broad W/Rh and W/Al (target/filter) x‐ray beams operated at 25–49 kVp through common shielding materials - Li - 2012 - Medical Physics - Wiley Online Library). 
+Kusano
+and other? #todo write reference for other nuc med isotopes here.
+
+
 @author: WilliamCh
 """
 import pandas as pd
@@ -13,26 +21,30 @@ import os
 att_coeff_fn = os.path.split(__file__)[0] + '/input_shielding_coefficients.csv'
 
 
+
+#%%
+
+def calculate_transmission(a, b , y, thickness):
+    return ((1 + b / a) * np.exp(a * y * thickness) - b / a) ** (-1 / y)
+
+
+def calculate_shielding(a, b, y, transmission):
+    return 1 / (a * y) * np.log((transmission ** (-y) + (b / a)) / (1 + (b / a)))
+
+
+
 class Archer:
     def __init__(self):
         self.df_att_coeff = pd.read_csv(att_coeff_fn)
 
-    @staticmethod
-    def calculate_transmission(a, b, y, thickness):
-        return ((1 + b / a) * np.exp(a * y * thickness) - b / a) ** (-1 / y)
-
-    @staticmethod
-    def calculate_shielding(a, b, y, transmission):
-        return 1 / (a * y) * np.log((transmission ** (-y) + (b / a)) / (1 + (b / a)))
-
     # Transmission calculation functions
     def shielding_to_transmission(self, thickness, material, kV):
         a, b, y = self.get_shielding_coefficients(material, kV)
-        return self.calculate_transmission(a, b, y, thickness)
+        return calculate_transmission(a, b, y, thickness)
 
     def transmission_to_shielding(self, transmission, material, kV):
         a, b, y = self.get_shielding_coefficients(material, kV)
-        return self.calculate_shielding(a, b, y, transmission)
+        return calculate_shielding(a, b, y, transmission)
 
     def get_shielding_coefficients(self, material, kV):
         view = self.df_att_coeff.loc[self.df_att_coeff.Material == material,
@@ -64,12 +76,11 @@ class Kusano(Archer):
     # Transmission calculation functions
     def shielding_to_transmission(self, thickness, material, isotope):
         a, b, y = self.get_shielding_coefficients(material, isotope)
-        return ((1 + b / a) * np.exp(a * y * thickness) - b / a) ** (-1 / y)
+        return calculate_transmission(a, b, y, thickness)
 
     def transmission_to_shielding(self, transmission, material, isotope):
         a, b, y = self.get_shielding_coefficients(material, isotope)
-        x = 1 / (a * y) * np.log((transmission ** (-y) + (b / a)) / (1 + (b / a)))
-        return x
+        return calculate_shielding(a, b, y, transmission)
 
     def get_shielding_coefficients(self, material, isotope):
         view = self.df_att_coeff.query("Isotope==@isotope").query('Material==@material')
@@ -115,12 +126,12 @@ class NM(Archer):
     def shielding_to_transmission(self, radionuclide, material, thickness):
         coeff = self.get_shielding_coefficients(radionuclide, material, fit_method='Archer')
         a, b, y = coeff['alpha'], coeff['beta'], coeff['gamma']
-        return self.calculate_transmission(a, b, y, thickness)
+        return calculate_transmission(a, b, y, thickness)
 
     def transmission_to_shielding(self, radionuclide, material, transmission):
         coeff = self.get_shielding_coefficients(radionuclide, material, fit_method='Archer')
         a, b, y = coeff['alpha'], coeff['beta'], coeff['gamma']
-        return self.calculate_shielding(a, b, y, transmission)
+        return calculate_shielding(a, b, y, transmission)
 
 
 #    def nth_vl_best_match(self, radionuclide, material):
