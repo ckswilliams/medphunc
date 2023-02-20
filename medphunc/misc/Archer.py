@@ -22,6 +22,39 @@ att_coeff_fn = os.path.split(__file__)[0] + '/input_shielding_coefficients.csv'
 
 
 
+# Copy/pasted here from pytch. consider refactor so that there's one source for this function
+def select_item_enumerated(items, item_name, multiple=False, return_key=False):
+    if type(items) is dict:
+        item_list = items.keys()
+        is_dict = True
+    elif type(items) is list:
+        item_list = items
+        is_dict = False
+    else:
+        raise(ValueError('bad input type'))
+    
+    s = f'Select {item_name} from the list'
+    if multiple:
+        s = s+'\n separate multiple selections with comma.'
+    else:
+        s = s+'\n please input a single integer to choose'
+    s = s+'\n'+'\n'.join([f'{i} - {name}' for i, name in enumerate(item_list)])
+    s = s+' -> '
+    sel = input(s)
+    sel = sel.split(',')
+    sel = [int(s) for s in sel]
+    if is_dict:
+        out = [list(items.keys())[s] for s in sel]
+    else:
+        out = sel
+    if not return_key:
+        out = [items[s] for s in sel]
+    if not multiple:
+        out = out[0]
+    
+    return out
+
+
 #%%
 
 def calculate_transmission(a, b , y, thickness):
@@ -34,17 +67,42 @@ def calculate_shielding(a, b, y, transmission):
 
 
 class Archer:
-    def __init__(self):
-        self.df_att_coeff = pd.read_csv(att_coeff_fn)
+    df_att_coeff : pd.DataFrame = None
+    
+    shielding_source_options = {
+        'bjr + Li (W/Rh)':'input_shielding_coefficients.csv',
+        'BJR + Li (W/Al)':'shielding_coefficients_bjr_li(MG  W Al).csv',
+        'Simpkin':'input_shielding_coefficients_simpkin.csv'}
+    
+    
+    def __init__(self, source = 'bjr + Li (W/Rh)'):
+        self._load_shielding_coefficients(source)
+        
+        
+    def _load_shielding_coefficients(self, source=None):
+        if source is None:
+            source = select_item_enumerated(self.shielding_source_options,
+                                            'Shielding coefficient source',
+                                            return_key=True)
+        att_coeff_fn = os.path.split(__file__)[0] + '/' + self.shielding_source_options[source]
+        self._load_shielding_fn(att_coeff_fn)
+    
+    
+    def _load_shielding_fn(self, fn):
+        self.df_att_coeff = pd.read_csv(fn)
+        
+    
 
     # Transmission calculation functions
     def shielding_to_transmission(self, thickness, material, kV):
         a, b, y = self.get_shielding_coefficients(material, kV)
         return calculate_transmission(a, b, y, thickness)
 
+
     def transmission_to_shielding(self, transmission, material, kV):
         a, b, y = self.get_shielding_coefficients(material, kV)
         return calculate_shielding(a, b, y, transmission)
+
 
     def get_shielding_coefficients(self, material, kV):
         view = self.df_att_coeff.loc[self.df_att_coeff.Material == material,
