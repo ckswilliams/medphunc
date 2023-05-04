@@ -5,16 +5,17 @@ This package contains a variety of scripts and functions that may find a use wit
 The scope of the package is very broad, ranging from image analysis to facilitating data transfer with PACS.
 
 While these scripts mostly work, they are not necessarily designed for ease of use over ease of development.
-Little effort has been put into user interfaces. Documentation is extremely inconsistent.
-Feedback and bug reports are desirable, but should be met with no expectation of rapid turnaround.
+Little effort has been put into user interfaces. Documentation is rather inconsistent.
+Please send feedback and bug reports as they arise.
 
-I recommend that these scripts are used with an anaconda distribution.
-To set up an anaconda environment from scratch that is compatible with this package, start with something like the following:
+I recommend that these scripts are used with an anaconda distribution. Setup instructions from scratch:
 
-conda config --add channels conda-forge
-conda create --name medph python=3.9 numpy pandas dicom2nifti jpeg nibabel opencv spyder scikit-image scikit-learn astropy lxml openpyxl xlrd spyder
-conda activate medph pynetdicom
-pip install rdsr-navigator python-gdcm
-
-
-pip install git+https://github.com/ckswilliams/medphunc.git
+Download the package to a directory
+Navigate to the directory
+Create an environment using:
+conda env create --file environment.yml
+The default name is gp (short for general purpose). Activate the environment:
+conda activate gp
+Install the package:
+pip install -e .
+proceed

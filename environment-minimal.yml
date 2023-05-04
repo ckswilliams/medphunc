@@ -1,0 +1,26 @@
+name: gp
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - dicom2nifti
+  - xlrd
+  - nibabel
+  - jpeg
+  - lxml
+  - opencv
+  - python=3.10
+  - scikit-learn
+  - numpy
+  - openpyxl
+  - pandas
+  - scikit-image
+  - pynetdicom
+  - matplotlib
+  - shapely
+  - openjpeg 
+  - pillow
+  - plotly
+  - pip:
+    - python-gdcm
+    - rdsr-navigator

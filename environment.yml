@@ -1,0 +1,39 @@
+name: gp
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - dicom2nifti
+  - xlrd
+  - spyder
+  - nibabel
+  - jpeg
+  - lxml
+  - opencv
+  - python=3.10
+  - scikit-learn
+  - numpy
+  - openpyxl
+  - pandas
+  - scikit-image
+  - python-docx
+  - docxtpl
+  - pydantic
+  - pynetdicom
+  - matplotlib
+  - shapely
+  - tabula-py
+  - camelot-py
+  - ghostscript
+  - openjpeg 
+  - pillow
+  - plotly
+  - pip
+  - ipykernel
+  - openjpeg 
+  - pip:
+    - docx2pdf
+    - ghostscript
+    - python-gdcm
+    - rdsr-navigator
+    - pylibjpeg[all]
