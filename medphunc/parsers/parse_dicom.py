@@ -21,7 +21,7 @@ from typing import Type
 
 #%%
 
-def extract_metadata(d: Type[pydicom.Dataset]) -> dict:
+def extract_metadata(d: Type[pydicom.Dataset], include_image=False) -> dict:
     """
     Extract metadata from a pydicom object for the purpose of creating a table
     for inter-object comparison
@@ -42,24 +42,26 @@ def extract_metadata(d: Type[pydicom.Dataset]) -> dict:
     output = {}
     for item in d:
         if item.name in ['Pixel Data', 'pixel_array']:
-            continue
+            if include_image:
+                output[item.name] = d.pixel_array
+                continue
         
         output[item.name] = item.value
     return output
 
-def parse_single_dcm(fn):
+def parse_single_dcm(fn, include_image=False):
     if not isinstance(fn, pydicom.dataset.FileDataset):
         d = pydicom.read_file(fn)
     else:
         d = fn
-    output = extract_metadata(d)
+    output = extract_metadata(d, include_image)
     df = pd.DataFrame.from_dict(output, orient='index')
     df.columns = ['value']
     return df
 
 
 #%% 
-def dicom_files_to_metadata(fns):
+def dicom_files_to_metadata(fns, include_image=False):
     output = []
     for fn in fns:
         try:
@@ -69,22 +71,22 @@ def dicom_files_to_metadata(fns):
                   'error':e}
             output.append(dd)
             continue
-        dd = extract_metadata(d)
+        dd = extract_metadata(d, include_image)
         dd['fn'] = fn
         output.append(dd)
     df = pd.DataFrame(output)
     return df
 
-def dicom_folder_to_metadata(folder, suffix='.dcm', recursive=True, one_per_folder=False):
+def dicom_folder_to_metadata(folder, suffix='.dcm', recursive=True, one_per_folder=False, include_image=False):
     p = pathlib.Path(folder)
     fns = list(p.glob('**/*'+suffix))
     if one_per_folder:
         fns = {fn.parent:fn for fn in fns}.values()
-    df = dicom_files_to_metadata(fns)
+    df = dicom_files_to_metadata(fns, include_image)
     return df
 
-def dicom_objects_to_dataframe(dicom_objects):
-    dd = [extract_metadata(d) for d in dicom_objects]
+def dicom_objects_to_dataframe(dicom_objects, include_image=False):
+    dd = [extract_metadata(d, include_image) for d in dicom_objects]
     return pd.DataFrame(dd)
 
 #%%
