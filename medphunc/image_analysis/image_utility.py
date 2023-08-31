@@ -674,7 +674,7 @@ def calculate_resolution_from_MTF(f, MTF):
 #%% Statistic functions
     
 def window_variance(img, window_length):
-
+    img = img.astype(float)
     wmean, wsqrmean = (cv2.boxFilter(x, -1, (window_length, window_length),
     borderType=cv2.BORDER_REFLECT) for x in (img, img*img))
     var = wsqrmean - wmean*wmean
