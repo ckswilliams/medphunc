@@ -56,11 +56,11 @@ def retrieve_orthanc_instance(instance_oid: str) -> pydicom.Dataset:
     pydicom.Dataset containing the requested dicom data.
     
     """
-    return pydicom.read_file(DicomBytesIO(orthanc.get_instance_file(instance_oid)))
+    return pydicom.read_file(DicomBytesIO(orthanc.get_instances_id_file(instance_oid)))
 
 
 def retrieve_orthanc_series(series_oid: str) -> List[pydicom.Dataset]:
-    instance_oids = orthanc.get_series_information(series_oid)['Instances']
+    instance_oids = orthanc.get_series_id(series_oid)['Instances']
     return [retrieve_orthanc_instance(oid) for oid in instance_oids]
 
 
@@ -130,7 +130,8 @@ def retrieve_series(series_uid):
 def retrieve_sop_instance(sop_uid):
     orthanc_instance_ids = orthanc.post_tools_find({"Level": 'Instance',
                                            'Query': {'SOPInstanceUID': sop_uid}})
-
+    if len(orthanc_instance_ids)==0:
+        raise(ValueError('Requested SOP instance is not available in orthanc'))
     d = retrieve_orthanc_instance(orthanc_instance_ids[0])
     try:
         im = d.pixel_array
@@ -175,7 +176,7 @@ class Thank(pi.RDSR):
         if self.QueryRetrieveLevel == 'STUDY':
             output = []
             for study_oid in orthanc_ids:
-                study_info = orthanc.get_study_information(study_oid)
+                study_info = orthanc.get_studies_id(study_oid)
                 series_oids = study_info['Series']
                 output.append([retrieve_orthanc_series(series_oid) for series_oid in series_oids])
             return output
