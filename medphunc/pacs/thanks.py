@@ -87,7 +87,7 @@ def retrieve_orthanc_volume_data(
 
 
 def check_series_status(series_uid):
-    series_oids = orthanc.c_find({"Level": 'Series',
+    series_oids = orthanc.post_tools_find({"Level": 'Series',
                                   'Query': {'SeriesInstanceUID': series_uid}})
     if len(series_oids) == 1:
         return True
@@ -112,7 +112,7 @@ def retrieve_series(series_uid):
         Tuple containing the requested image volume and metadata
 
     """
-    orthanc_instance_ids = orthanc.c_find({"Level": 'Instance',
+    orthanc_instance_ids = orthanc.post_tools_find({"Level": 'Instance',
                                            'Query': {'SeriesInstanceUID': series_uid}})
 
     if len(orthanc_instance_ids) > 1:
@@ -128,7 +128,7 @@ def retrieve_series(series_uid):
 
 
 def retrieve_sop_instance(sop_uid):
-    orthanc_instance_ids = orthanc.c_find({"Level": 'Instance',
+    orthanc_instance_ids = orthanc.post_tools_find({"Level": 'Instance',
                                            'Query': {'SOPInstanceUID': sop_uid}})
 
     d = retrieve_orthanc_instance(orthanc_instance_ids[0])
@@ -158,7 +158,7 @@ class Thank(pi.RDSR):
                 value = s.value
             query[s.keyword] = value
 
-        return orthanc.c_find({'Level': qrl, 'Query': query})
+        return orthanc.post_tools_find({'Level': qrl, 'Query': query})
 
     def retrieve_all_data(self):
         orthanc_ids = self.query_orthanc()
