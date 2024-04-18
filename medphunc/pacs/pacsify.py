@@ -578,6 +578,11 @@ class SearchSet(pydicom.Dataset):
         return drill_result
 
     def drill_all(self, find=True):
+        """Drill down on any item in the self.result dataframe.
+        Removing items from the result dataframe before calling this function
+        can improve efficiency!
+        
+        """
         drill_all = [self.drill_down(i, find) for i in self.result.index]
         if find and drill_all:
             drill_concat = pd.concat(self.drill_result)

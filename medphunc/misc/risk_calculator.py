@@ -134,6 +134,8 @@ class Risk:
 
     def calculate_odds(self):
         odds = 1 / self.risk
+        odds = odds.where(odds < 1e15, 1e15)
+            
         odds.columns = odds.columns.str.title() + ' risk'
         self.odds = odds.applymap(float_formatter)
         return self.odds

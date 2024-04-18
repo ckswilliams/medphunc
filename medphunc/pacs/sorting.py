@@ -38,8 +38,8 @@ if len(logger.handlers) == 0:
 
 #%%
 def find_best_series_match(test_series,
-                           filter_list
-                           ):
+                           filter_list,
+                           default='shortest'):
     """
     Search in the pandas series provided for the values in filter list.
     Don't apply any filters that have no results, prefer the shortest result
@@ -68,13 +68,22 @@ def find_best_series_match(test_series,
         new_series = test_series.loc[test_series.str.contains(filter_term, case=False)]
         if new_series.shape[0] > 0:
             test_series = new_series
-            
-    #if multiple series left, pick the shortest description
-    if test_series.shape[0] > 1:
-        lengths = test_series.str.len()
-        test_series = test_series.loc[lengths == lengths.max()]
     
-    return test_series.index[0], test_series
+    if default=='shortest':
+        #if multiple series left, pick the shortest description
+        if test_series.shape[0] > 1:
+            lengths = test_series.str.len()
+            test_series = test_series.loc[lengths == lengths.max()]
+            if test_series.shape[0] > 1:
+                test_series = test_series.iloc[:1]
+    elif default=='first':
+        test_series = test_series.iloc[:1]
+    elif default=='all':
+        # return everything
+        pass
+        
+    
+    return test_series.index, test_series
 
 
 

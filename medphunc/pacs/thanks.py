@@ -143,8 +143,12 @@ def retrieve_sop_instance(sop_uid):
 
 class Thank(pi.RDSR):
 
-    def query_orthanc(self):
-        qrl = self.QueryRetrieveLevel.title()
+    def query_orthanc(self, qrl = None, **kwargs):
+        if qrl is None:
+            qrl = self.QueryRetrieveLevel.title()
+        else:
+            if qrl not in ['STUDY','SERIES','INSTANCE','IMAGE']:
+                raise(ValueError('qrl not one of STUDY, SERIES, or INSTANCE/IMAGE'))
         if qrl == 'Image':
             qrl = 'Instance'
         query = {}
@@ -158,6 +162,7 @@ class Thank(pi.RDSR):
             else:
                 value = s.value
             query[s.keyword] = value
+        query = {**query, **kwargs}
 
         return orthanc.post_tools_find({'Level': qrl, 'Query': query})
 
@@ -188,3 +193,8 @@ class Thank(pi.RDSR):
             sop_uids = [sop_uids]
         sop_uids = list(np.array(sop_uids).flat)
         return [retrieve_sop_instance(suid) for suid in sop_uids]
+    
+    
+    def retrieve_rdsrs(self):
+        instance_oids = self.query_orthanc(qrl='INSTANCE', SOPClassUID = '1.2.840.10008.5.1.4.1.1.88.67')
+        return [retrieve_orthanc_instance(oid) for oid in instance_oids]

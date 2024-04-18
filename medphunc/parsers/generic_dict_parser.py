@@ -78,7 +78,7 @@ def find_explode_dict_to_columns(df: pd.DataFrame) -> pd.DataFrame:
     Find columns that contain dictionaries, then expand them
     """
     for column in df.columns:
-        test = df[column].apply(lambda x: isinstance(x, collections.Mapping))
+        test = df[column].apply(lambda x: isinstance(x, collections.abc.Mapping))
 
         if test.any():
             logger.debug('Found dictionary column named %s, exploding all columns', column)
