@@ -139,7 +139,7 @@ class WED:
     
     
     def calculate_ssde(self):
-        self.ssde = ssde.ssde_from_wed(self.wed_results['water_equiv_circle_diam']/10, self.region)
+        self.ssde = ssde.ssde_from_wed(self.wed_results['water_equiv_circle_diam']/10, self.region).iloc[0]
                   
     def __repr__(self):
         return f'Water equivalent diameter calculations \nWED: {self.wed} cm\nSSDE: {self.ssde.iloc[0]}'
@@ -294,7 +294,7 @@ def wed_from_dicom(dicom_pydicom, threshold = -300, window = False):
     '''
 
     im = dicom_pydicom.pixel_array # dicom pixel values as 2D numpy pixel array
-    im = im - 1000.0 # remap scale 0:... to HU -1000:...
+    pydicom.pixel_data_handles.apply_rescale(im, dicom_pydicom)
 
     # determine pixel area in mm²/px²
     scale = dicom_pydicom.PixelSpacing[0] * dicom_pydicom.PixelSpacing[1]
