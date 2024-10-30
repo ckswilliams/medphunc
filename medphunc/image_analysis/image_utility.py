@@ -54,9 +54,11 @@ def find_largest_segmented_object_contour(m):
 def find_largest_segmented_object(m):
     """ Find the largest segmented object from a mask. Works in 3d."""
     t, n = measure.label(m, return_num=True)
+    if m.sum() == 0:
+        raise(ValueError('Cannot segment empty mask'))
     if n > 1:
         vals, counts = np.unique(t.flatten(), return_counts=True)
-        i = counts[1:].argsort()[-1] # Get index for the second most common object (after background)
+        i = counts[1:].argsort()[-1] # Get index for the most common object, excluding background
         t = t==vals[i+1] # Make a mask where the measured label is equal to the most common object
     return t
 
