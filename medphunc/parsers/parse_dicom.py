@@ -17,6 +17,7 @@ import glob
 import pydicom
 import pandas as pd
 import pathlib
+import datetime
 from typing import Type
 
 #%%
@@ -89,7 +90,16 @@ def dicom_objects_to_dataframe(dicom_objects, include_image=False):
     dd = [extract_metadata(d, include_image) for d in dicom_objects]
     return pd.DataFrame(dd)
 
+
+def calculate_age_decimal(dicom_object):
+    x=(pd.to_datetime(dicom_object.StudyDate, yearfirst=True)- pd.to_datetime(dicom_object.PatientBirthDate, yearfirst=True))
+    return x.days/365.25
+
+
 #%%
+
+
+
 
 
 if __name__ == '__main__':
