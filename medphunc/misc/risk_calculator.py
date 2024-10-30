@@ -11,7 +11,6 @@ dose or CT expo organ calculated dose.
 import numpy as np
 import pandas as pd
 from math import floor, log10
-import win32com.client
 from tkinter.filedialog import askopenfilename
 
 # %% Calculate via effective dose
@@ -52,6 +51,7 @@ def do_effective_dose_risk_calc():
 # Load CT Expo spreadsheet
 
 def load_dose_data(fn):
+    import win32com.client
     input("This will cause (minor) issues with open Excel workbooks. Please close then press Enter to continue...")
     xlApp = win32com.client.Dispatch("Excel.Application")
     xlApp.Visible = False
@@ -243,6 +243,7 @@ class OrganRisk(Risk):
 
     @staticmethod
     def load_ctexpo_dose_data_xls(fn):
+        import win32com.client
         "Prefer not using this method. Save CT-Expo as an xlsm workbook and it shouldn't be necessary"
         input("This will cause (minor) issues with open Excel workbooks. Please close then press Enter to continue...")
         xlApp = win32com.client.Dispatch("Excel.Application")
