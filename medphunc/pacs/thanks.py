@@ -166,9 +166,8 @@ class Thank(pi.RDSR):
 
         return orthanc.post_tools_find({'Level': qrl, 'Query': query})
 
-    def retrieve_all_data(self):
-        orthanc_ids = self.query_orthanc()
 
+    def retrieve_oids(self, orthanc_ids):
         if self.QueryRetrieveLevel == 'IMAGE':
             return [retrieve_orthanc_instance(oid) for oid in orthanc_ids]
 
@@ -186,6 +185,29 @@ class Thank(pi.RDSR):
                 output.append([retrieve_orthanc_series(series_oid) for series_oid in series_oids])
             return output
             # raise(NotImplementedError('Not yet available on a study searchset'))
+
+
+    def retrieve_all_data(self):
+        orthanc_ids = self.query_orthanc()
+        return self.retrieve_oids(orthanc_ids)
+
+    
+    def retrieve(self, retrieve_index=None):
+        retrieve_object = self.copy()
+        if retrieve_index is not None:
+            if self.query_level == 'study':
+                retrieve_object.StudyInstanceUID = self.result.StudyInstanceUID[retrieve_index]
+            if self.query_level == 'series':
+                retrieve_object.SeriesInstanceUID = self.result.SeriesInstanceUID[retrieve_index]
+            if self.query_level == 'instance':
+                retrieve_object.SOPInstanceUID = self.result.SOPInstanceUID[retrieve_index]
+        for key in self.keys():
+            if retrieve_object[key].value == '':
+                retrieve_object.pop(key)
+        orthanc_ids = retrieve_object.query_orthanc()
+        return self.retrieve_oids(orthanc_ids)
+    
+                
 
     def retrieve_one_instance_all_series(self):
         sop_uids = self.move_one_instance_all_series()
