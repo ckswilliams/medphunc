@@ -548,7 +548,7 @@ class SearchSet(pydicom.Dataset):
         for key in self.keys():
             if dd[key].value == '':
                 dd.pop(key)
-        return do_move(dd)
+        return do_move(dd), dd
 
     def copy(self):
         return copy.deepcopy(self)
@@ -721,37 +721,73 @@ class RDSR(SearchSet):
     Separate class for searches that specifically revolve around RDSRs.
     %todo Should this just be combined with SearchSet?
     """
-    def move_rdsrs(self):
+    def find_rdsrs(self):
         """
         Try to move all RDSR within the selected search results
 
         On the study level, finds all studies with SR objects and performs a series level search.
-        On the series level, Just moves ALL series that are SR.
-        %todo needs nuance on the series level. Consider image level search and check SOPClassUID
+        On the series level, finds all series which are tagged SR
+        On the instance level, finds all instances which match the RDSR SOP Class
+        Yields an object of the same class for each object. These can be moved
+        with .move(). The 'result' dataframe retains the instance level 
+        search result.
 
         Returns
         -------
+        list of RDSR objects
 
         """
+        
+
         if self.QueryRetrieveLevel == 'STUDY':
-            study_with_srs = (self.result.ModalitiesInStudy.explode() == 'SR').index
+            study_with_srs = (self.result.ModalitiesInStudy.explode() == 'SR').index.unique()
+            logger.debug('%s studies containing SRs found', len(study_with_srs))
             # study_uids = self.result.StudyInstanceUID.loc[self.result.ModalitiesInStudy.apply(lambda x: 'SR' in x)]
             for study_index in study_with_srs:
                 r = self.drill_down(study_index)
+                logger.debug('Now searching in study %s', self.result.AccessionNumber.loc[study_index])
                 r.find()
-                r.move_rdsrs()
+                yield from r.find_rdsrs()
 
         if self.QueryRetrieveLevel == 'SERIES':
-            """functions for getting RDSRS out of a list of series data go here"""
+            """functions for finding RDSRS out of a list of series data"""
             try:
                 # siemens artis
-                rdsr_series_uid = self.result.loc[self.result.Modality == 'SR'].SeriesInstanceUID.iloc[0]
+                sr_series_indices = self.result.loc[self.result.Modality == 'SR'].index
+                logger.debug('%s series containing SRs found', len(sr_series_indices))
             except IndexError:
-                print('No SRs in study, move failed')
+                logger.warning('No SRs in study, find failed')
                 return
-            series_mover = self.copy()
-            series_mover.SeriesInstanceUID = rdsr_series_uid
-            return series_mover.move()
+            for sr_index in sr_series_indices:
+                series_mover = self.drill_down(sr_index)
+                series_mover.find()
+                yield from series_mover.find_rdsrs()
+
+        
+        if self.QueryRetrieveLevel == 'IMAGE':
+            try:
+                # siemens artis
+                rdsr_sop_instance_uids = self.result.loc[self.result.SOPClassUID == '1.2.840.10008.5.1.4.1.1.88.67'].SOPInstanceUID
+            except IndexError:
+                logger.warning('No RDSRs in series, move failed')
+                return
+            for rdsr_sop_instance_uid in rdsr_sop_instance_uids:
+                
+                rdsr_instance = self.copy()
+                rdsr_instance.SOPInstanceUID = rdsr_sop_instance_uid
+                yield rdsr_instance
+                
+                
+    def move_rdsrs(self):
+        
+        logger.debug('Attempting to find and move RDSRs')
+        rdsr_instance_list = self.find_rdsrs()
+        rdsr_instance_list = list(rdsr_instance_list)
+        logger.info('%s movable RDSRs found. Attempting to move.', len(rdsr_instance_list))
+        for rdsr_instance in rdsr_instance_list:
+            rdsr_instance.move()
+        
+        
 
 
 class Multilevel:
