@@ -22,8 +22,17 @@ from medphunc.pacs import pacsify as pi
 
 class Orthancs(pyorthanc.Orthanc):
 
-    def __init__(self, url='http://192.168.56.101:8042/'):
-        super().__init__(url)
+    def __init__(self, orthanc_info):
+        url = orthanc_info['url']
+        if 'cert' in orthanc_info:
+            cert = tuple(orthanc_info['cert'])
+        else:
+            cert = None
+        if 'verify' in orthanc_info:
+            verify = orthanc_info['verify']
+        else:
+            verify = False
+        super().__init__(url, verify=verify, cert = cert)
 
     def set_orthanc_url(self, url):
         self._orthanc_url = url
@@ -35,9 +44,10 @@ if not default_orthanc:
     default_orthanc = orthanc_config['default']
 orthanc_info = orthanc_config[default_orthanc]
 
-orthanc = Orthancs(orthanc_info['url'])
+orthanc = Orthancs(orthanc_info)
 if 'username' in orthanc_info:
     orthanc.setup_credentials(orthanc_info['username'], orthanc_info['password'])
+orthanc.timeout=5 # Retain default value. Change manually if longer timeout is required.
 
 
 # %%
