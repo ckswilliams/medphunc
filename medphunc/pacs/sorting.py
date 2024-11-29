@@ -50,6 +50,8 @@ def find_best_series_match(test_series,
         series containing strings.
     filter_list : list of strings
         List of strings to be used as search terms. Regex is allowed I think.
+    default : string - shortest, first, or all.
+        Determines which result to keep if multiple persist past filtering.
 
     Returns
     -------

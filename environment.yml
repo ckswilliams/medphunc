@@ -30,7 +30,6 @@ dependencies:
   - plotly
   - pip
   - ipykernel
-  - openjpeg 
   - napari
   - pip:
     - docx2pdf

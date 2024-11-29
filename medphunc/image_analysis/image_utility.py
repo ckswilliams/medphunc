@@ -355,11 +355,19 @@ def apply_window(im, window_level=None,
     im : np.array
         any numpy array, but an image is preferred.
     window_level : str or tuple, optional
-        Set the window width and window centre in two ints. The default is False.
-        Useful values for CT may be (300,120).
+        If string, it will correlate with a typical CT scan type.
+        
+        If a tuple, the first value will be the window width in each direction
+        The second value will be the level, or window centre.
+        e.g. For CT we might use (300,120), which will window pixel values from
+        180-420.
+        The default is False, which will retain the current range but can still
+        be used for applying a unitary range.
         
     unit_range : boolean, optional
         scale down to a range from 0 to 1. The default is True.
+        This can be used to rescale an image so the minimum value is 0, and
+        maximum is 1.
 
     Returns
     -------
