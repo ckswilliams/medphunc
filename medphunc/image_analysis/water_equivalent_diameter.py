@@ -264,7 +264,7 @@ def wed_from_image(im, scale, threshold = -300, window = False, verbose=False):
     return output
 
 def wed_from_dicom_file(dicom_filename, threshold = -300, window = False):
-    d = pydicom.read_file(dicom_filename)
+    d = pydicom.dcmread(dicom_filename)
     return wed_from_dicom(d, threshold, window)
 
 
@@ -294,7 +294,7 @@ def wed_from_dicom(dicom_pydicom, threshold = -300, window = False):
     '''
 
     im = dicom_pydicom.pixel_array # dicom pixel values as 2D numpy pixel array
-    pydicom.pixel_data_handles.apply_rescale(im, dicom_pydicom)
+    pydicom.pixel_data_handlers.apply_rescale(im, dicom_pydicom)
 
     # determine pixel area in mm²/px²
     scale = dicom_pydicom.PixelSpacing[0] * dicom_pydicom.PixelSpacing[1]
@@ -304,7 +304,7 @@ def wed_from_dicom(dicom_pydicom, threshold = -300, window = False):
 def get_wed(dicom):
     '''input agnostic wrapping function that returns only WED'''
     if type(dicom) != pydicom.dataset.FileDataset:
-        d = pydicom.read_file(dicom)
+        d = pydicom.dcmread(dicom)
     
     output = wed_from_dicom(d)
     wed = output['water_equiv_circle_diam']

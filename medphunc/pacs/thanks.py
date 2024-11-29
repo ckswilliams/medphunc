@@ -66,7 +66,7 @@ def retrieve_orthanc_instance(instance_oid: str) -> pydicom.Dataset:
     pydicom.Dataset containing the requested dicom data.
     
     """
-    return pydicom.read_file(DicomBytesIO(orthanc.get_instances_id_file(instance_oid)))
+    return pydicom.dcmread(DicomBytesIO(orthanc.get_instances_id_file(instance_oid)))
 
 
 def retrieve_orthanc_series(series_oid: str) -> List[pydicom.Dataset]:

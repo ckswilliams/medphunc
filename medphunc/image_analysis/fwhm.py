@@ -99,7 +99,7 @@ def interpolate_at_index(threshold, X, i, direction=None):
     
 output = []
 for dfn in dfns:
-    d = pydicom.read_file(dfn)
+    d = pydicom.dcmread(dfn)
     result = {}
     try:
         result['slice_thickness'] = calculate_catphan_slice_thickness(d, roi)
@@ -133,7 +133,7 @@ dfnss = glob.glob(r'C:\shared\dicomdump\PHYSICS_TEST - PHYSICS_TEST_RPCT2_2020\2
 
 output = []
 for dfn in dfnss:
-    d = pydicom.read_file(dfn)
+    d = pydicom.dcmread(dfn)
     result = {}
     try:
         result['slice_thickness'] = calculate_catphan_slice_thickness(d, r)

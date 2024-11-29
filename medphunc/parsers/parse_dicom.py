@@ -47,12 +47,16 @@ def extract_metadata(d: Type[pydicom.Dataset], include_image=False) -> dict:
                 output[item.name] = d.pixel_array
                 continue
         
-        output[item.name] = item.value
+        if (item.name in output) or (item.name == 'Private Creator'):
+            export_tag_name = f'{item.name}_{item.tag}'
+        else:
+            export_tag_name = item.name
+        output[export_tag_name] = item.value
     return output
 
 def parse_single_dcm(fn, include_image=False):
     if not isinstance(fn, pydicom.dataset.FileDataset):
-        d = pydicom.read_file(fn)
+        d = pydicom.dcmread(fn)
     else:
         d = fn
     output = extract_metadata(d, include_image)
@@ -66,7 +70,7 @@ def dicom_files_to_metadata(fns, include_image=False):
     output = []
     for fn in fns:
         try:
-            d = pydicom.read_file(fn)
+            d = pydicom.dcmread(fn)
         except Exception as e:
             dd = {'fn':fn,
                   'error':e}

@@ -328,7 +328,7 @@ def old_clinical_mtf(im, pixel_spacing, roi_size=(50, 30)):
 
 def old_clinical_mtf_from_dicom(fn):
     """Calculate the clinical MTF from a dicom file, across the patient/air anterior border."""
-    d = pydicom.read_file(fn)
+    d = pydicom.dcmread(fn)
     im = rescale_ct_dicom(d)
     return clinical_mtf(im, d.PixelSpacing)
 

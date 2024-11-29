@@ -326,7 +326,7 @@ if __name__ == '__main__':
     ct_results = analyse_nnps(ct_nnps, d.PixelSpacing[0])
     
     
-    d = pydicom.read_file('images/MammoDaily1.IMA')
+    d = pydicom.dcmread('images/MammoDaily1.IMA')
     region_size=128
     region_overlap=1.1
     mg_nnps = calculate_planar_nnps(d.pixel_array.copy(), 0.085, region_size, region_overlap)

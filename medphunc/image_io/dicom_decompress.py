@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def decompress_file(fn):
     fn = Path(fn)
-    d = pydicom.read_file(fn.as_posix())
+    d = pydicom.dcmread(fn.as_posix())
     if d.file_meta.TransferSyntaxUID != '1.2.840.10008.1.2.1':
         try:
             d.decompress()
@@ -67,7 +67,7 @@ def unpack_tomography(fn: typing.Union[os.PathLike, str], specify_frames: typing
 
     """
     fn = Path(fn)
-    d = pydicom.read_file(fn.as_posix())
+    d = pydicom.dcmread(fn.as_posix())
     if len(d.pixel_array.shape) < 3:
         raise(ValueError('The supplied dicom file has only 2 dimensions and is therefore not an cannot be unpacked into slices'))
 

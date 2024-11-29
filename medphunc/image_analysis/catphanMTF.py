@@ -150,7 +150,7 @@ def catphan_mtf(im, pixel_spacing):
     return output
 
 def catphan_mtf_from_dicom(fn):
-    d = pydicom.read_file(fn)
+    d = pydicom.dcmread(fn)
     im = d.pixel_array
     output = catphan_mtf(im, d.PixelSpacing)
     return output

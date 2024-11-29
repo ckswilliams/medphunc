@@ -62,7 +62,7 @@ def load_ct_folder(folder, return_tags='middle'):
     logger.info('glob: {}'.format(folder))
     for fpath in folder.glob('**/*'):
         logger.debug("loading: %s", fpath)
-        files.append(pydicom.read_file(fpath))
+        files.append(pydicom.dcmread(fpath))
     
     logger.info("file count: {}".format(len(files)))
     return load_ct_dicoms(files, return_tags)
@@ -153,7 +153,7 @@ def save_ct_folder(im: np.array, folder: os.PathLike, d:pydicom.Dataset):
         d.SliceLocation = f'{new_slice_location:.1f}'
         new_image_position = d.ImagePositionPatient[::-1] + offset
         d.ImagePositionPatient = [str(f) for f in new_image_position[::-1]]
-        pydicom.write_file(folder / str(dd.SOPInstanceUID+'.dcm'), dd)
+        pydicom.dcmwrite(folder / str(dd.SOPInstanceUID+'.dcm'), dd)
 
 
 def get_slice_position_offset(d, z_offset=0, y_offset=0, x_offset=0):

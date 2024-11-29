@@ -74,7 +74,7 @@ class Segmenter:
         
     @classmethod
     def from_filename(cls, fn):
-        d = pydicom.read_file(fn)
+        d = pydicom.dcmread(fn)
         return cls(d.pixel_array)
     
     @classmethod
@@ -213,7 +213,7 @@ def calculate_head_noise_mode_from_dicom(d, threshold=200, window_diameter=20):
 
 
 def calculate_head_noise_mode_from_file(fn, threshold=200):
-    d = pydicom.read_file(fn)
+    d = pydicom.dcmread(fn)
     return calculate_head_noise_mode_from_dicom(d)
 
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
 
     fn = 'M:/MedPhy/General/Export_2020-01-20_12-05-01/10000000/10000001/10000098/100000BC'
     
-    d = pydicom.read_file(fn)
+    d = pydicom.dcmread(fn)
     im = d.pixel_array
     show_noise_thresholds(d)
 

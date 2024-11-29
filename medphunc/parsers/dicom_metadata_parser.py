@@ -36,7 +36,7 @@ def dicom_to_metadata(fns):
     output = []
     for fn in fns:
         try:
-            d = pydicom.read_file(fn)
+            d = pydicom.dcmread(fn)
         except Exception as e:
             dd = {'fn':fn,
                   'error':e}

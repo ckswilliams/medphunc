@@ -234,14 +234,14 @@ def decompress_and_load(fn, temp_fn='temp.dcm'):
     args = [GDCM, '-w', fn, temp_fn]
     p = subprocess.Popen(args, shell = False)#, cwd = '/app/openrem/remapp/netdicom',
     x = p.communicate()
-    d = pydicom.read_file(temp_fn)
+    d = pydicom.dcmread(temp_fn)
     #os.remove(temp_fn)
     return d
 
 
 def dose_data_from_dicom(fn):
     try:
-        dcm = pydicom.read_file(fn)
+        dcm = pydicom.dcmread(fn)
         dcm.pixel_array
     except:
         dcm = decompress_and_load(fn)
