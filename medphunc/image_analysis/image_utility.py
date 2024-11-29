@@ -296,6 +296,34 @@ def ctshow(im, ax=None):
         ax.imshow(tim)
         fig.show()
 
+
+def dcmshow(d, ax=None):
+    "Quick, dirty function for showing a dicom image based on the tagged window width and level"
+    window = d.WindowWidth
+    level = d.WindowCenter
+    
+    tim = apply_window(d.pixel_array, (window,level))
+    if ax:
+        ax.imshow(tim, cmap='bone')
+        ax.axis('off')
+        return ax
+    else:
+        fig, ax = plt.subplots(figsize=(12, 12))
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        ax.axis('off')
+        ax.imshow(tim, cmap='bone')
+        fig.show()
+
+
+def select_roi_dcm(d):
+    window = d.WindowWidth
+    level = d.WindowCenter
+    
+    tim = apply_window(d.pixel_array, (window,level), unit_range=True)
+    return cv2.selectROI('image_window', tim)
+
+    
+
 #%% Planar functions
 
 def localise_homogenous_region(im):
