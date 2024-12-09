@@ -273,7 +273,7 @@ def dfind(d):
 def process_find_results(x):
     if len(x) == 1:
         if x[0][0].Status == 0:
-            return pd.DataFrame()
+            return pd.DataFrame({})
         else:
             raise (ValueError(x[0][0]))
     else:
@@ -415,8 +415,8 @@ def find_images_from_series():
 class SearchSet(pydicom.Dataset):
     drill = {}
     drill_result = {}
-    drill_merge = pd.DataFrame()
-    result = pd.DataFrame()
+    drill_merge = pd.DataFrame({})
+    result = pd.DataFrame({})
     query_level = None
 
     def __init__(self, query_level='series', **kwargs):
