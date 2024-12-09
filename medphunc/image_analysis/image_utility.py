@@ -299,10 +299,20 @@ def ctshow(im, ax=None):
 
 def dcmshow(d, ax=None):
     "Quick, dirty function for showing a dicom image based on the tagged window width and level"
-    window = d.WindowWidth
-    level = d.WindowCenter
+    try:
+        window = d.WindowWidth
+    except AttributeError:
+        window=None
+    try:
+        level = d.WindowCenter
+    except AttributeError:
+        level = None
     
-    tim = apply_window(d.pixel_array, (window,level))
+    if (window is not None) and (level is not None):
+        tim = apply_window(d.pixel_array, (window,level))
+    else:
+        tim = d.pixel_array
+        
     if ax:
         ax.imshow(tim, cmap='bone')
         ax.axis('off')
