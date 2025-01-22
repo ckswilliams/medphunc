@@ -15,8 +15,8 @@ Default settings for QH included.
 from pydicom import Dataset
 import pydicom
 from pydicom.uid import ExplicitVRLittleEndian, ImplicitVRLittleEndian, ExplicitVRBigEndian
-from pynetdicom.sop_class import XRayRadiationDoseSRStorage
-from pynetdicom import AE
+from pynetdicom.sop_class import XRayRadiationDoseSRStorage, DigitalXRayImageStorageForPresentation
+from pynetdicom import AE, StoragePresentationContexts
 from pynetdicom import QueryRetrievePresentationContexts
 from pynetdicom import VerificationPresentationContexts
 from pynetdicom import StoragePresentationContexts
@@ -166,17 +166,22 @@ def run_query(generator):
 # %% storage and ping functions, that use a different instance of ae and assoc
 store_assoc = None
 
-
-def ensure_store_assoc():
+store_assoc_contexts = [[XRayRadiationDoseSRStorage, ImplicitVRLittleEndian],
+                        [DigitalXRayImageStorageForPresentation, ImplicitVRLittleEndian]
+                       ]
+                        
+def ensure_store_assoc(force = False):
     global store_assoc
     try:
         if test_assoc(store_assoc):
-            return store_assoc
+            if not force:
+                return store_assoc
     except:
         pass
     ae = AE(MY.aet)
-    #ae.requested_contexts = StoragePresentationContexts
-    ae.add_requested_context(XRayRadiationDoseSRStorage, ImplicitVRLittleEndian)
+    for context in store_assoc_contexts:
+        ae.add_requested_context(context[0], context[1])
+
     store_assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
     if test_assoc(store_assoc):
         return store_assoc
@@ -185,10 +190,19 @@ def ensure_store_assoc():
         return store_assoc
 
 
+                
 def do_store(d):
     ensure_store_assoc()
-    generator = store_assoc.send_c_store(d)
-    return run_query(generator)
+    try:
+        generator = store_assoc.send_c_store(d)
+        return run_query(generator)
+    except ValueError as e:
+        print(e)
+        store_assoc_contexts.append([d.file_meta.MediaStorageSOPClassUID,
+                            d.file_meta.TransferSyntaxUID])
+        ensure_store_assoc(force=True)
+        do_store(d)
+
 
 
 def do_ping():
