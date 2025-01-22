@@ -14,6 +14,7 @@ from typing import Type, List, Tuple
 import numpy as np
 import os
 from medphunc.image_io import ct
+import ssl
 
 from medphunc.pacs import pacsify as pi
 
@@ -24,15 +25,17 @@ class Orthancs(pyorthanc.Orthanc):
 
     def __init__(self, orthanc_info):
         url = orthanc_info['url']
-        if 'cert' in orthanc_info:
-            cert = tuple(orthanc_info['cert'])
-        else:
-            cert = None
+        
+        context = False
         if 'verify' in orthanc_info:
-            verify = orthanc_info['verify']
-        else:
-            verify = False
-        super().__init__(url, verify=verify, cert = cert)
+            context = ssl.create_default_context(cafile=orthanc_info['verify'])
+        if 'cert' in orthanc_info:
+            # Load the .crt and .key files
+            if not context:
+                context = ssl.create_default_context()
+            context.load_cert_chain(certfile=orthanc_info['cert'][0],
+                                    keyfile=orthanc_info['cert'][1])
+        super().__init__(url, verify=context)
 
     def set_orthanc_url(self, url):
         self._orthanc_url = url

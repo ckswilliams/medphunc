@@ -39,7 +39,7 @@ def CA_xml_file_to_df(fn):
     except Exception as e:
         logger.info('Could not read xml file: %s' % fn)
         logger.info('Reason: %s' % e)
-        return pd.DataFrame()
+        return pd.Dataframe({})
     dose_info = x['root']['Query_Criteria']['DoseInfo']
     if type(dose_info) != list:
         dose_info = [dose_info]
@@ -48,7 +48,7 @@ def CA_xml_file_to_df(fn):
         dfout = dp.really_screw_with_a_dataframe(dfout)
     except:
         logger.info('Failed to convert xml to dataframe in fn: %s' % fn)
-        return  pd.DataFrame()
+        return  pd.Dataframe({})
     useless_columns = dfout.columns[dfout.columns.contains('@')]
     for column in useless_columns:
         logger.info('Dropping column %s with contents %s' % (column, dfout[column].unique()))

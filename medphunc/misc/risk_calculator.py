@@ -84,8 +84,8 @@ def combine_ct_expo_workbooks(fns):
 class Risk:
     age = []
     gender = ''
-    risk = pd.DataFrame()
-    odds = pd.DataFrame()
+    risk = pd.Dataframe({})
+    odds = pd.Dataframe({})
 
     def __init__(self, age_range=None, gender='a'):
         "Initialse with age as a numeric or list of numerics, and gender one of 'm', 'f', 'a' "
@@ -309,7 +309,7 @@ class OrganRisk(Risk):
     @staticmethod
     def combine_ct_expo_workbooks(fns):
         if fns is None:
-            return pd.DataFrame()
+            return pd.DataFrame({})
         organ_dose_list = []
         for fn in fns:
             organ_dose_list.append(OrganRisk.load_ctexpo_dose_data(fn))
