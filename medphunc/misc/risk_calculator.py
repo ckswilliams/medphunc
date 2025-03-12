@@ -84,8 +84,8 @@ def combine_ct_expo_workbooks(fns):
 class Risk:
     age = []
     gender = ''
-    risk = pd.Dataframe({})
-    odds = pd.Dataframe({})
+    risk = pd.DataFrame({})
+    odds = pd.DataFrame({})
 
     def __init__(self, age_range=None, gender='a'):
         "Initialse with age as a numeric or list of numerics, and gender one of 'm', 'f', 'a' "

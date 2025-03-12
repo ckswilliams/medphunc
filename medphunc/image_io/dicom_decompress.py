@@ -36,7 +36,7 @@ def decompress_file_list(fns):
     for fn in fns:
         try:
             decompress_file(fn)
-        except (ValueError, FileNotFoundError) as e:
+        except (ValueError, FileNotFoundError, PermissionError) as e:
             logger.warning(e)
 
 
