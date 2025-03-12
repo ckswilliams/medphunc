@@ -233,3 +233,22 @@ class Thank(pi.RDSR):
     def retrieve_rdsrs(self):
         instance_oids = self.query_orthanc(qrl='INSTANCE', SOPClassUID = '1.2.840.10008.5.1.4.1.1.88.67')
         return [retrieve_orthanc_instance(oid) for oid in instance_oids]
+    
+    
+    def retrieve_or_move_and_retrieve(self, retrieve_index=None):
+        """
+        Method for reducing PACS load by assuming that data is in the accessible
+        orthanc already, and only looking in PACS if orthanc is empty.
+        
+        However, it will cause issues when used in a situation where the orthanc 
+        contains only some of the data you want.
+        
+        Could be refined so that if searching on the series or instance level
+        """
+        ds = self.retrieve(retrieve_index)
+        if len(ds) == 0:
+            self.move(retrieve_index)
+            ds = self.retrieve(retrieve_index)
+        return ds
+    
+   

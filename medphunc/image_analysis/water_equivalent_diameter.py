@@ -117,7 +117,7 @@ class WED:
             raise(ValueError(f'region must be one of [body,head], {region} was passed'))
             
         
-        c = cls(volume, np.product(dcm.PixelSpacing), threshold=threshold, region=region, window=None, verbose=verbose, method=method)
+        c = cls(volume, np.prod(dcm.PixelSpacing), threshold=threshold, region=region, window=None, verbose=verbose, method=method)
 
         return c
     
@@ -142,7 +142,7 @@ class WED:
         self.ssde = ssde.ssde_from_wed(self.wed_results['water_equiv_circle_diam']/10, self.region).iloc[0]
                   
     def __repr__(self):
-        return f'Water equivalent diameter calculations \nWED: {self.wed} cm\nSSDE: {self.ssde.iloc[0]}'
+        return f'Water equivalent diameter calculations \nWED: {self.wed} cm\nSSDE: {self.ssde}'
     
     
 def wed_from_volume(vol, scale, threshold=-300, window=False, verbose=False, method='centre'):

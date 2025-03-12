@@ -26,6 +26,10 @@ import copy
 #from pynetdicom import debug_logger
 #debug_logger()
 
+from typing import Type, Union, List
+
+
+
 #%%
 
 logger = logging.getLogger(__name__)
@@ -37,6 +41,50 @@ if len(logger.handlers) == 0:
 
 
 #%%
+
+
+def select_final_search_result(test_series:pd.Series, default: str) -> pd.Series:
+    """
+    Select a single item from a dataframe based on some simple criteria
+
+    Parameters
+    ----------
+    test_series : pd.Series
+        The series to be sorted.
+    default : str in ['shortest','first','all']
+        The method to sort. Shortest returns the shortest string in the series.
+        first returns the top value.
+        all retains everything (i.e. calling this function with 'all' does nothing)
+
+    Returns
+    -------
+    pd.Series
+        A series containing only the values which correspond to the 'default' argument.
+
+    """
+
+    if default=='shortest':
+        #if multiple series left, pick the shortest description
+        if test_series.shape[0] > 1:
+            lengths = test_series.str.len()
+            test_series = test_series.loc[lengths == lengths.min()]
+            if test_series.shape[0] > 1:
+                test_series = test_series.iloc[:1]
+    if default=='longest':
+        #if multiple series left, pick the shortest description
+        if test_series.shape[0] > 1:
+            lengths = test_series.str.len()
+            test_series = test_series.loc[lengths == lengths.max()]
+            if test_series.shape[0] > 1:
+                test_series = test_series.iloc[:1]
+    elif default=='first':
+        test_series =  test_series.iloc[:1]
+    elif default=='all':
+        # return everything, so do nothing
+        pass
+    return test_series
+
+
 def find_best_series_match(test_series,
                            filter_list,
                            default='shortest'):
@@ -71,19 +119,8 @@ def find_best_series_match(test_series,
         if new_series.shape[0] > 0:
             test_series = new_series
     
-    if default=='shortest':
-        #if multiple series left, pick the shortest description
-        if test_series.shape[0] > 1:
-            lengths = test_series.str.len()
-            test_series = test_series.loc[lengths == lengths.max()]
-            if test_series.shape[0] > 1:
-                test_series = test_series.iloc[:1]
-    elif default=='first':
-        test_series = test_series.iloc[:1]
-    elif default=='all':
-        # return everything
-        pass
-        
+
+    test_series = select_final_search_result(test_series,default)
     
     return test_series.index, test_series
 
@@ -112,4 +149,159 @@ def best_result_match(pacs_find_result, reference_date=None, date_window=1, stud
     
     return pacs_find_result
     
+
+
+def search(df: Type[pd.DataFrame],
+            search_terms: Union[str, List[str], int, float, List[int], List[float], datetime.datetime],
+            column: str,
+            negation: bool,
+            search_type: str,
+            search_strictness: str) -> pd.DataFrame:
+    """
+    Function for filtering dataframes according a series of search terms or datetime info.
+
+    Parameters
+    ----------
+    df : Type[pd.DataFrame]
+        A dataframe containing, at least, the column specified in the column argument.
+    search_terms : Union[str, List[str], datetime.datetime]
+        a string, a list of strings, a numeric, a list of numerics, or a datetime object.
+    column : str
+        The column to search the dataframe on. For dicom-related searching,
+        it's likely to be one of the standard pydicom tags like StudyDescription.
+    negation : bool
+        Whether to only return the inverse of the search terms, rather than 
+        the term itself.
+    search_type : str in ['str', 'greater']
+        'str' string-type search, check whether the search term is anywhere in the values
+        case insensitive.
+        'greater' for quantitative comparisons. Use the negation argument for lesser.
+    search_strictness : str in ['all','filter']
+        'all' - the final results must meet all the provided search terms
+        'filter' - any term which results in zero applicable results will be
+        ignored
+
+
+    Returns
+    -------
+    pd.DataFrame
+      A dataframe containing only the rows which meet the search criteria
+        
+
+    """
     
+    
+    tdf = df.copy()
+
+    if type(search_terms) is not list:
+        search_terms = [search_terms]
+
+    matches = []
+    # Collect a series for each search term that shows whether the term was found for each data point
+    for search_term in search_terms:
+        if search_type == 'str':
+            matching = tdf[column].astype(str).str.lower().str.contains(search_term.lower())
+        elif search_type == 'greater':
+            matching = tdf[column] > search_term
+        else:
+            raise (NotImplementedError('An unimplemented matching value was used'))
+        if negation:
+            matching = ~matching
+        matches.append(matching)
+
+    # Depending on the search strictness, return a result
+    aggregate_matches = pd.DataFrame(matches).T
+    if search_strictness == 'any':
+        match_result = aggregate_matches.any(axis=1)
+    elif search_strictness == 'all':
+        # Strictly require that all search terms are met.
+        # For instance, strictly require that modalities in study includes CT
+        match_result = aggregate_matches.all(axis=1)
+    elif search_strictness == 'filter':
+        # Filter means apply each search term and exclude anything that doesn't meet it
+        # UNLESS this would mean zero results remain.
+        match_result = df[column] == df[column]  # Start with all true
+        for match in matches:
+            test_match = match_result & match  # Try to do an and between the previous answer and the new match
+            if test_match.sum() >= 1:
+                match_result = test_match  # Unless there is at least one remaining match, ignore the search term
+    else:
+        raise (NotImplementedError('An unimplemented search strictness value was used'))
+    return tdf.loc[match_result, :].copy()
+
+
+#%% some little convenience functions for extracting certain data types when using the searchset and thanks objects.
+
+
+def get_scouts(thanks_object):
+    if thanks_object.query_level == 'study':
+        if thanks_object.result.shape[0] == 0:
+            raise(ValueError('No results available for study level query.'))
+        if thanks_object.result.shape[0] > 1:
+            raise(ValueError('Too many results for study level query.'))
+        return get_scouts(thanks_object.drill_down(thanks_object.result.index[0],find=True))
+    if thanks_object.query_level in ['instance', 'image']:
+        raise(ValueError('Cannot be used on a instance-level query'))
+    r_series = thanks_object.result
+    scout_series = r_series.loc[lambda x:(x.NumberOfSeriesRelatedInstances<3) & (x.SeriesNumber < 100)]
+    
+    ds_scout = []
+    for scout_index in scout_series.index:
+        ds = thanks_object.retrieve_or_move_and_retrieve(scout_index)
+        for d in ds[0]:
+            ds_scout.append(d)
+    return ds_scout
+
+
+def get_axial_index(thanks_series_object):
+    if thanks_series_object.result.shape[0] == 0:
+        raise(ValueError('No results available for this query. Search first.'))
+    if thanks_series_object.query_level != 'series':
+        raise(ValueError('Only series-level objects should be supplied'))
+
+    r_series = thanks_series_object.result
+    ax_series = search(r_series, ['saggittal','coronal'], column='SeriesDescription',search_type='str',negation=True,
+                   search_strictness='all')
+    ax_series = search(ax_series, ['axial','ax','vol'], column='SeriesDescription', search_type='str',negation=False,search_strictness='filter')
+    ax_series = ax_series.loc[lambda x: x.NumberOfSeriesRelatedInstances > 20,:]
+    ax_series = ax_series.loc[lambda x: x.NumberOfSeriesRelatedInstances == x.NumberOfSeriesRelatedInstances.min()]
+    axial_index = ax_series.index[0]
+    return axial_index
+    
+
+
+def get_first_last_axial_slices(thanks_series_object):
+    axial_index = get_axial_index(thanks_series_object)
+    
+    t_instance = thanks_series_object.drill_down(axial_index)
+    r_instance = t_instance.find()
+    min_instance_index = r_instance.loc[r_instance.InstanceNumber==r_instance.InstanceNumber.min()].index[0]
+    max_instance_index = r_instance.loc[r_instance.InstanceNumber==r_instance.InstanceNumber.max()].index[0]
+    d_min = t_instance.retrieve_or_move_and_retrieve(min_instance_index)[0]
+    d_max = t_instance.retrieve_or_move_and_retrieve(max_instance_index)[0]
+    return d_min, d_max
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
