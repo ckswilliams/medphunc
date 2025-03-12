@@ -83,7 +83,7 @@ def aggregate_nps(regions):
 
 #todo should I divide or multiply by pixel dimensions?!
 def calculate_normalisation(pixel_dims, region_size, n_regions):
-    return np.product(pixel_dims) / np.product(region_size) / n_regions
+    return np.prod(pixel_dims) / np.prod(region_size) / n_regions
 
 
 
@@ -287,12 +287,10 @@ def calculate_planar_nnps(im: np.array,
         2d or 3d array, showing a uniform circular object.
     pixel_size : iterable
         [y, x] pixel dimensions.
-    n_regions : int, optional
-        number of regions to sample. The default is 16.
-    radius : float, optional
-        radius of the circlular pattern of regions, in pixels. The default is 120.
     region_size : int, optional
-        Width/height of the regions, in pixels. The default is 70.
+        Width/height of the regions, in pixels. The default is 128.
+    region_overlap : float, optional
+        How much each region should overlap with the adjacent ones. The default is 0.5.
 
     Returns
     -------
@@ -320,9 +318,23 @@ def automate_ct_phantom_nnps(im,d, **kwargs):
 
 if __name__ == '__main__':
     
-    im, d = load_ct_folder('images/nps/')
+    # Example for getting the nnps analysis results using the automatic functionality
+    phantom_directory = 'images/nps/ctp'
+    im, d, end_points = load_ct_folder(phantom_directory)
+    nnps_results = automate_ct_phantom_nnps(im,d)
+    plt.plot(nnps_results['frequency'],nnps_results['radial'])
+    import pandas as pd
+    pd.DataFrame(nnps_results).to_excel('output.xlsx')
+    
+    # Example for producing the nnps then caluclating the results  
+    im, d, end_points = load_ct_folder('images/nps/')
     #im = im[:,:,0]
-    ct_nnps = calculate_ct_nnps(im, d.PixelSpacing)
+    ct_nnps = calculate_ct_nnps(im,
+                                d.PixelSpacing,
+                                n_regions = 16, # Number of regions to sample NNPS from. Suggest at least 8, but more is fine.
+                                radius=120,# radius in pixels from the centre of the image. Should be clearly within the homogeneity window.
+                                region_side=64 # how big each region should be. Don't want to get too close to the centre or edge of the phantom
+                                )
     ct_results = analyse_nnps(ct_nnps, d.PixelSpacing[0])
     
     
