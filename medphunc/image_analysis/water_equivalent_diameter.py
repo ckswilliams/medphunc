@@ -39,13 +39,19 @@
 # Based on published software:
 # 2018 Caspar Verhey (caspar@verhey.net), MIT License (see MIT licence for details LICENSE)
 # 
-
+import os
 import cv2
 import numpy as np
 import math
 import pydicom
+import pandas as pd
+from scipy import ndimage
+from typing import List
+
+
 from medphunc.misc import ssde
 from medphunc.image_io import ct
+from medphunc.image_analysis import image_utility as iu
 
 import logging
 logger = logging.getLogger(__name__)
@@ -309,6 +315,270 @@ def get_wed(dicom):
     output = wed_from_dicom(d)
     wed = output['water_equiv_circle_diam']
     return wed
+
+
+#%%
+
+def check_localiser_orientation(d_scout):
+    if d_scout.PatientOrientation[0] in ['A','P']:
+        orientation = 'LAT'
+        sum_axis = 1
+    elif d_scout.PatientOrientation[1] in ['A','P']:
+        orientation = 'LAT'
+        sum_axis = 0
+    elif d_scout.PatientOrientation[0] in ['L','R']:
+        orientation = 'AP'
+        sum_axis = 1
+    elif d_scout.PatientOrientation[1] in ['L','R']:
+        orientation = 'AP'
+        sum_axis = 0
+    else:
+        raise(NotImplementedError('orientation not allowed'))
+    return orientation, sum_axis
+
+
+def preprocess_image(input_image):
+    im = input_image.copy()
+
+    x = np.where(im[im.shape[0]//2,:] > -1000)[0]
+    y = np.where(im[:,im.shape[1]//2] > -1000)[0]
+    im = im[y.min():y.max(),x.min():x.max()]
+    
+    return im
+
+
+
+def Dw_eq(im, axis, cal_m, cal_c, d, n):
+    Aw = (im.mean(axis=axis) * cal_m + cal_c) * d * n
+    Dw = (Aw * 4 / np.pi)**0.5
+    return Dw.mean()
+
+
+device_lookup_table = {'default':{'AP':[1.6433, -11.622]},
+                       'WSTCRKPRIMESP':{'AP':[1.366469,-6.732]},
+                       'TCHB5CT1PRISM':{'AP':[1.47953, -6.2701]},
+                       'TCHB5CT2PRISM':{'AP':[1.4589, 1.153]},
+                       'TCHB5CT3PRIME':{'AP':[1.1887, 2.7153]},
+                       'AQSCN':{'AP':[1.1189, 20.3209]},
+                       'AQPRIMESCAN':{'AP':[1.29950, 3.41784]}
+                       }
+
+
+def measure_scout_wed(d, z_index_min=0, z_index_max=0):
+    
+    equipment_id = d.StationName
+    if equipment_id not in device_lookup_table:
+        equipment_id = 'default'
+    orientation, sum_axis = check_localiser_orientation(d)
+    cal_params = device_lookup_table[equipment_id][orientation]
+    
+    im = preprocess_image(d.pixel_array)
+    if z_index_max<1:
+        z_index_max = im.shape[1-sum_axis]
+    if z_index_min < 0:
+        z_index_min = 0
+    if z_index_max > im.shape[1-sum_axis]:
+        z_index_max = im.shape[1-sum_axis]
+    if z_index_min == z_index_max:
+        z_index_min = 0
+        z_index_max = im.shape[1-sum_axis]
+    if z_index_min > z_index_max:
+        z_index_min, z_index_max = z_index_max, z_index_min
+    im = im[z_index_min:z_index_max,:]
+    Dw = Dw_eq(im, sum_axis, cal_params[0], cal_params[1], d=d.PixelSpacing[sum_axis], n=im.shape[sum_axis])
+    return Dw
+
+
+#%% scout_wed_calibration
+
+
+def check_wonky_axial(d):
+    "If it's not down-the-line, just find something else."
+    ordinals = d.ImageOrientationPatient
+    nominals = [1.00000, 0.00000, 0.00000, 0.00000, 1.00000, 0.00000]
+    for ordinal, nominal in zip(ordinals, nominals):
+        if abs(abs(ordinal)-nominal > 0.05):
+            return True
+            raise(ValueError('The image provided as an axial is not oriented perpendicular to the patient z plane'))
+
+
+def get_localiser_z_index_of_axial_slice(d_axial: pydicom.dataset.FileDataset,
+                                         d_scout: pydicom.dataset.FileDataset) -> int:
+    "Check where the supplied axial dicom falls within the supplied scout dicom."
+    
+    orientation, sum_axis = check_localiser_orientation(d_scout)
+    
+    if orientation=='AP':
+        pass
+    elif orientation == 'LAT':
+        pass
+    else:
+        raise(NotImplementedError('Only scouts oriented as either LAT or AP are permitted'))
+    
+    scout_z_start = float(d_scout.ImagePositionPatient[2])
+    scout_spacing = float(d_scout.PixelSpacing[1-sum_axis])
+    z_axial = float(d_axial.ImagePositionPatient[2])
+    z_axial_index = int((scout_z_start-z_axial)/scout_spacing)
+    
+    return z_axial_index
+
+
+
+def get_relevant_localiser(localisers: list[pydicom.dataset.FileDataset],
+                           sample_axial: pydicom.dataset.FileDataset) -> dict:
+    relevant_scouts = {}
+    for d_scout in localisers:
+        try:
+            orientation, sum_axis = check_localiser_orientation(d_scout)
+        except:
+            print('non scout situation?')
+            continue
+        if d_scout.FrameOfReferenceUID == sample_axial.FrameOfReferenceUID:
+            logging.debug('localiser with matching frame of reference')
+            relevant_scouts[orientation] = d_scout
+    else:
+        if len(relevant_scouts) == 0:
+            raise(ValueError('Scout matching the frame of reference of the axial volume not found'))
+    return relevant_scouts
+
+
+def detect_number_patient_voxels_at_fov_edge(im: np.array,
+                                             threshold: int=300,
+                                             out_of_fov_hu_number: int=-2048) -> int:
+    
+    ax_mask = im > threshold
+    ax_mask = ndimage.binary_fill_holes(ax_mask)
+    ax_mask = iu.find_largest_segmented_object(ax_mask)
+    ax_mask = ndimage.binary_dilation(ax_mask,iterations=2)
+    pt_near_fov_voxels_count = (im[ax_mask] == out_of_fov_hu_number).sum()
+    return pt_near_fov_voxels_count
+
+
+
+def wed_localiser_calibration_for_study(localisers: list[pydicom.dataset.FileDataset],
+                           axials: list[pydicom.dataset.FileDataset]) -> List[dict]:
+    
+    localisers = load_dicom_list(localisers)
+    axials = load_dicom_list(axials)
+    
+    
+    test_axial = axials[len(axials)//2]
+    check_wonky_axial(test_axial)
+    
+    relevant_scouts = get_relevant_localiser(localisers, test_axial)
+    
+    scout_Aws = {}
+    for orientation, d_scout in relevant_scouts.items():
+        orientation, sum_axis = check_localiser_orientation(d_scout)
+        scout_im = preprocess_image(d_scout.pixel_array)
+        scout_Aws[orientation] = scout_im.mean(axis=sum_axis)
+
+        
+    output = []
+    for d_axial in axials:
+        instance_data = {}
+        
+        # axial content
+        pt_near_fov_voxels = detect_number_patient_voxels_at_fov_edge(d_axial.pixel_array)
+        wed = water_equivalent_diameter.WED.from_dicom_objects([d_axial])
+        Aw_ax =(wed.wed*10)**2*np.pi/4
+        Aw_ax_norm = Aw_ax / scout_im.shape[sum_axis] / d_scout.PixelSpacing[sum_axis]
+        
+        #localiser data
+        for orientation, d_scout in relevant_scouts.items():
+            try:
+                scout_index = get_localiser_z_index_of_axial_slice(d_axial, d_scout)
+                instance_data['LPV_'+orientation] = scout_Aws[orientation][scout_index]
+            except IndexError as e:
+                print(e)
+                continue
+        
+        # meta data
+        instance_data['accession_number'] = d_axial.AccessionNumber
+        instance_data['study_description'] = d_axial.StudyDescription
+        instance_data['z'] = float(d_axial.ImagePositionPatient[2])
+        instance_data['scout_index'] = scout_index
+        instance_data['Aw_ax'] = Aw_ax
+        instance_data['Aw_ax_normalised'] = Aw_ax_norm
+        instance_data['near_fov_voxels'] = pt_near_fov_voxels
+        instance_data['slice_location'] = float(d_axial.SliceLocation)
+        output.append(instance_data)
+    
+    return output
+
+
+
+def get_calibration_parameters(df: pd.DataFrame, calibration_orientation: str='AP') -> (float, float):
+    m, c = np.polyfit(df['LPV_'+calibration_orientation],df.Aw_ax_normalised, 1)
+    return m, c
+
+
+def load_dicom_list(ds):
+    out_ds = []
+    for d in ds:
+        if type(d) is not pydicom.dataset.FileDataset:
+            out_ds.append(pydicom.dcmread(d))
+        else:
+            out_ds.append(d)
+    return ds
+
+
+
+def calibrate_device_scouts(localisers: list[list[os.PathLike | pydicom.dataset.FileDataset]],
+                     axials:list[list[os.PathLike | pydicom.dataset.FileDataset]],
+                     calibration_orientation = 'AP',
+                     tight_fov_threshold=50):
+    
+    output = []
+    for ds_scouts, ds_axials in zip(localisers,axials):
+        output = output + wed_localiser_calibration_for_study(ds_scouts, ds_axials)
+    
+    return process_wed_calibration_results(output)
+    
+
+
+def process_wed_calibration_results(calibration_results, tight_fov_threshold=50, calibration_orientation = 'AP'):
+    df = pd.DataFrame(calibration_results)
+    df = df.loc[df.near_fov_voxels < tight_fov_threshold,:]
+    m, c = get_calibration_parameters(df, calibration_orientation)
+    return df, (m, c)
+
+
+    
+
+#%% PACS scripts for getting data
+
+def wed_from_scout_via_accession_number(accession_number: str) -> float:
+    from medphunc.pacs import thanks
+    from medphunc.pacs import sorting
+    
+    t_study = thanks.Thank('study',AccessionNumber=accession_number)
+    t_study.find()
+    t_series = t_study.drill_down(0,find=True)
+    ds_scout = sorting.get_scouts(t_series)
+    ds_axial = sorting.get_first_last_axial_slices(t_series)
+
+    relevant_localisers = get_relevant_localiser(ds_scout, ds_axial[0])
+    d_scout = relevant_localisers['AP']
+    
+    axial_indices = [get_localiser_z_index_of_axial_slice(d, d_scout) for d in ds_axial]
+    return measure_scout_wed(d_scout, axial_indices[0], axial_indices[1])
+
+
+
+def wed_calibration_data_from_accession_number(accession_number: str) -> List[dict]:
+    from medphunc.pacs import thanks
+    from medphunc.pacs import sorting
+    
+    t_study = thanks.Thank('study',AccessionNumber=accession_number)
+    t_study.find()
+    t_series = t_study.drill_down(0,find=True)
+    ds_scout = sorting.get_scouts(t_series)
+    axial_index = sorting.get_axial_index(t_series)
+    ds_axial = t_series.retrieve_or_move_and_retrieve(axial_index)[0]
+    
+    return wed_localiser_calibration_for_study(ds_scout, ds_axial)
+
 
 #%%
 
