@@ -386,6 +386,9 @@ def measure_scout_wed(d, z_index_min=0, z_index_max=0):
         z_index_min, z_index_max = z_index_max, z_index_min
     im = im[z_index_min:z_index_max,:]
     Dw = Dw_eq(im, sum_axis, cal_params[0], cal_params[1], d=d.PixelSpacing[sum_axis], n=im.shape[sum_axis])
+    
+    
+    
     return Dw
 
 
@@ -480,7 +483,7 @@ def wed_localiser_calibration_for_study(localisers: list[pydicom.dataset.FileDat
         
         # axial content
         pt_near_fov_voxels = detect_number_patient_voxels_at_fov_edge(d_axial.pixel_array)
-        wed = water_equivalent_diameter.WED.from_dicom_objects([d_axial])
+        wed = WED.from_dicom_objects([d_axial])
         Aw_ax =(wed.wed*10)**2*np.pi/4
         Aw_ax_norm = Aw_ax / scout_im.shape[sum_axis] / d_scout.PixelSpacing[sum_axis]
         
@@ -548,7 +551,7 @@ def process_wed_calibration_results(calibration_results, tight_fov_threshold=50,
 
 #%% PACS scripts for getting data
 
-def wed_from_scout_via_accession_number(accession_number: str=None,
+def wed_from_scout_via_uid(accession_number: str=None,
                                         study_instance_uid: str=None) -> float:
     from medphunc.pacs import thanks
     from medphunc.pacs import sorting
@@ -559,6 +562,8 @@ def wed_from_scout_via_accession_number(accession_number: str=None,
         t_study = thanks.Thank('study',AccessionNumber=accession_number)
         t_study.find()
         t_series = t_study.drill_down(0)
+    else:
+        raise(ValueError('Need to supply one of study_instance_uid or accession_number'))
     t_series.find()
 
     ds_scout = sorting.get_scouts(t_series)
@@ -572,13 +577,19 @@ def wed_from_scout_via_accession_number(accession_number: str=None,
 
 
 
-def wed_calibration_data_from_accession_number(accession_number: str) -> List[dict]:
+def wed_calibration_data_via_uid(accession_number: str=None,
+                                               study_instance_uid: str=None) -> List[dict]:
     from medphunc.pacs import thanks
     from medphunc.pacs import sorting
-    
-    t_study = thanks.Thank('study',AccessionNumber=accession_number)
-    t_study.find()
-    t_series = t_study.drill_down(0,find=True)
+    if study_instance_uid is not None:
+        t_series = thanks.Thank('series', StudyInstanceUID=study_instance_uid)
+    elif accession_number is not None:
+        t_study = thanks.Thank('study',AccessionNumber=accession_number)
+        t_study.find()
+        t_series = t_study.drill_down(0)
+    else:
+        raise(ValueError('Need to supply one of study_instance_uid or accession_number'))
+    t_series.find()
     ds_scout = sorting.get_scouts(t_series)
     axial_index = sorting.get_axial_index(t_series)
     ds_axial = t_series.retrieve_or_move_and_retrieve(axial_index)[0]
