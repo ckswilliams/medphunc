@@ -548,13 +548,19 @@ def process_wed_calibration_results(calibration_results, tight_fov_threshold=50,
 
 #%% PACS scripts for getting data
 
-def wed_from_scout_via_accession_number(accession_number: str) -> float:
+def wed_from_scout_via_accession_number(accession_number: str=None,
+                                        study_instance_uid: str=None) -> float:
     from medphunc.pacs import thanks
     from medphunc.pacs import sorting
     
-    t_study = thanks.Thank('study',AccessionNumber=accession_number)
-    t_study.find()
-    t_series = t_study.drill_down(0,find=True)
+    if study_instance_uid is not None:
+        t_series = thanks.Thank('series', StudyInstanceUID=study_instance_uid)
+    elif accession_number is not None:
+        t_study = thanks.Thank('study',AccessionNumber=accession_number)
+        t_study.find()
+        t_series = t_study.drill_down(0)
+    t_series.find()
+
     ds_scout = sorting.get_scouts(t_series)
     ds_axial = sorting.get_first_last_axial_slices(t_series)
 
