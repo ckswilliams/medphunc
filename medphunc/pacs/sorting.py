@@ -260,7 +260,8 @@ def get_axial_index(thanks_series_object):
         raise(ValueError('Only series-level objects should be supplied'))
 
     r_series = thanks_series_object.result
-    ax_series = search(r_series, ['saggittal','coronal'], column='SeriesDescription',search_type='str',negation=True,
+    ax_series = r_series.loc[lambda x: x.NumberOfSeriesRelatedInstances > 20,:]
+    ax_series = search(ax_series, ['saggittal','coronal', 'mip','sag','non_ce', 'sub-'], column='SeriesDescription',search_type='str',negation=True,
                    search_strictness='all')
     ax_series = search(ax_series, ['axial','ax','vol'], column='SeriesDescription', search_type='str',negation=False,search_strictness='filter')
     ax_series = ax_series.loc[lambda x: x.NumberOfSeriesRelatedInstances > 20,:]
