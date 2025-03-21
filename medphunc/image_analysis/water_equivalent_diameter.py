@@ -350,6 +350,7 @@ def preprocess_image(input_image):
 
 def Dw_eq(im, axis, cal_m, cal_c, d, n):
     Aw = (im.mean(axis=axis) * cal_m + cal_c) * d * n
+    Aw[Aw<0] = 0
     Dw = (Aw * 4 / np.pi)**0.5
     return Dw.mean()
 
@@ -360,7 +361,8 @@ device_lookup_table = {'default':{'AP':[1.6433, -11.622]},
                        'TCHB5CT2PRISM':{'AP':[1.4589, 1.153]},
                        'TCHB5CT3PRIME':{'AP':[1.1887, 2.7153]},
                        'AQSCN':{'AP':[1.1189, 20.3209]},
-                       'AQPRIMESCAN':{'AP':[1.29950, 3.41784]}
+                       'AQPRIMESCAN':{'AP':[1.29950, 3.41784]},
+                       'ID_STATION':{'AP':[1.6433, -11.622]}
                        }
 
 
@@ -386,8 +388,6 @@ def measure_scout_wed(d, z_index_min=0, z_index_max=0):
         z_index_min, z_index_max = z_index_max, z_index_min
     im = im[z_index_min:z_index_max,:]
     Dw = Dw_eq(im, sum_axis, cal_params[0], cal_params[1], d=d.PixelSpacing[sum_axis], n=im.shape[sum_axis])
-    
-    
     
     return Dw
 
