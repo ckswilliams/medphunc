@@ -275,10 +275,15 @@ def get_first_last_axial_slices(thanks_series_object):
     
     t_instance = thanks_series_object.drill_down(axial_index)
     r_instance = t_instance.find()
-    min_instance_index = r_instance.loc[r_instance.InstanceNumber==r_instance.InstanceNumber.min()].index[0]
-    max_instance_index = r_instance.loc[r_instance.InstanceNumber==r_instance.InstanceNumber.max()].index[0]
+    r_instance = r_instance.sort_values('InstanceNumber')
+    min_instance_index = r_instance.iloc[0].name # Skip the very first one because of those annoying measurement slices.
+    max_instance_index = r_instance.iloc[-1].name
     d_min = t_instance.retrieve_or_move_and_retrieve(min_instance_index)[0]
     d_max = t_instance.retrieve_or_move_and_retrieve(max_instance_index)[0]
+    if d_min.ImageOrientationPatient != d_max.ImageOrientationPatient:
+        # The first slice was one of those weird measurement images.
+        min_instance_index = r_instance.iloc[1].name # Skip the very first one because of those annoying measurement slices.
+        d_min = t_instance.retrieve_or_move_and_retrieve(min_instance_index)[0]
     return d_min, d_max
     
     
