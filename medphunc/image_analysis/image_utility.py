@@ -208,10 +208,13 @@ def weighted_mean_position(weighted_seg, intercept=-1000):
 def cv_roi_to_index(r):
     return [int(r[1]), int(r[1]+r[3]), int(r[0]), int(r[0]+r[2])]
 
-def apply_cv_roi(im, r):
+def apply_cv_roi(im, r,color_index='first'):
     i = cv_roi_to_index(r)
     if len(im.shape) == 3:
-        return im[:, i[0]:i[1], i[2]:i[3]].copy()
+        if color_index == 'first':
+            return im[:, i[0]:i[1], i[2]:i[3]].copy()
+        elif color_index == 'last':
+            return im[i[0]:i[1], i[2]:i[3],:].copy()
     
     return im[i[0]:i[1], i[2]:i[3]].copy()
 
