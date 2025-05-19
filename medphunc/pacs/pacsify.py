@@ -630,6 +630,19 @@ class SearchSet(pydicom.Dataset):
         search_tags['find'] = find
         drilled = cls(level, **search_tags)
         return drilled
+    
+    @classmethod
+    def from_study_uid_or_accession(cls,
+                                    study_uid = None,
+                                    accession_number = None):
+        if study_uid is not None:
+            return cls('series', StudyInstanceUID=study_uid)
+        elif accession_number is not None:
+            t_study = cls('study',AccessionNumber=accession_number)
+            t_study.find()
+            return cls('series', StudyInstanceUID=t_study.result.StudyInstanceUID[0])
+        else:
+            raise(ValueError('Need to supply one of study_instance_uid or accession_number'))
 
 
 # %% Deprecated dataset functions
@@ -728,6 +741,8 @@ def make_dataset(query_level='series', **kwargs):
     @classmethod
     def from_study_uid(cls, study_uid):
         return cls('study', StudyInstanceUID=study_uid)
+    
+
 
 # %% RDSR functions
 class RDSR(SearchSet):

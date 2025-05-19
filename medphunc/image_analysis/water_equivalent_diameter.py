@@ -552,18 +552,10 @@ def process_wed_calibration_results(calibration_results, tight_fov_threshold=50,
 #%% PACS scripts for getting data
 
 def wed_from_scout_via_uid(accession_number: str=None,
-                                        study_instance_uid: str=None) -> float:
+                           study_instance_uid: str=None) -> float:
     from medphunc.pacs import thanks
     from medphunc.pacs import sorting
-    
-    if study_instance_uid is not None:
-        t_series = thanks.Thank('series', StudyInstanceUID=study_instance_uid)
-    elif accession_number is not None:
-        t_study = thanks.Thank('study',AccessionNumber=accession_number)
-        t_study.find()
-        t_series = t_study.drill_down(0)
-    else:
-        raise(ValueError('Need to supply one of study_instance_uid or accession_number'))
+    t_series = thanks.Thank.from_study_uid_or_accession(study_instance_uid, accession_number)
     t_series.find()
 
     ds_scout = sorting.get_scouts(t_series)
@@ -578,17 +570,10 @@ def wed_from_scout_via_uid(accession_number: str=None,
 
 
 def wed_calibration_data_via_uid(accession_number: str=None,
-                                               study_instance_uid: str=None) -> List[dict]:
+                                 study_instance_uid: str=None) -> List[dict]:
     from medphunc.pacs import thanks
     from medphunc.pacs import sorting
-    if study_instance_uid is not None:
-        t_series = thanks.Thank('series', StudyInstanceUID=study_instance_uid)
-    elif accession_number is not None:
-        t_study = thanks.Thank('study',AccessionNumber=accession_number)
-        t_study.find()
-        t_series = t_study.drill_down(0)
-    else:
-        raise(ValueError('Need to supply one of study_instance_uid or accession_number'))
+    t_series = thanks.Thank.from_study_uid_or_accession(study_instance_uid, accession_number)
     t_series.find()
     ds_scout = sorting.get_scouts(t_series)
     axial_index = sorting.get_axial_index(t_series)
