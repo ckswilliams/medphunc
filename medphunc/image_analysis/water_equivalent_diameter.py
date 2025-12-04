@@ -352,7 +352,7 @@ def Dw_eq(im, axis, cal_m, cal_c, d, n):
     Aw = (im.mean(axis=axis) * cal_m + cal_c) * d * n
     Aw[Aw<0] = 0
     Dw = (Aw * 4 / np.pi)**0.5
-    return Dw.mean()
+    return Dw
 
 
 device_lookup_table = {'default':{'AP':[1.6433, -11.622]},
@@ -366,7 +366,7 @@ device_lookup_table = {'default':{'AP':[1.6433, -11.622]},
                        }
 
 
-def measure_scout_wed(d, z_index_min=0, z_index_max=0):
+def measure_scout_wed(d, z_index_min=0, z_index_max=0, array_return=False):
     
     equipment_id = d.StationName
     if equipment_id not in device_lookup_table:
@@ -388,8 +388,10 @@ def measure_scout_wed(d, z_index_min=0, z_index_max=0):
         z_index_min, z_index_max = z_index_max, z_index_min
     im = im[z_index_min:z_index_max,:]
     Dw = Dw_eq(im, sum_axis, cal_params[0], cal_params[1], d=d.PixelSpacing[sum_axis], n=im.shape[sum_axis])
-    
-    return Dw
+    if array_return:
+        return Dw
+    else:
+        return Dw.mean()
 
 
 #%% scout_wed_calibration
@@ -552,7 +554,8 @@ def process_wed_calibration_results(calibration_results, tight_fov_threshold=50,
 #%% PACS scripts for getting data
 
 def wed_from_scout_via_uid(accession_number: str=None,
-                           study_instance_uid: str=None) -> float:
+                           study_instance_uid: str=None,
+                           array_return:bool = False) -> float:
     from medphunc.pacs import thanks
     from medphunc.pacs import sorting
     t_series = thanks.Thank.from_study_uid_or_accession(study_instance_uid, accession_number)
@@ -565,7 +568,7 @@ def wed_from_scout_via_uid(accession_number: str=None,
     d_scout = relevant_localisers['AP']
     
     axial_indices = [get_localiser_z_index_of_axial_slice(d, d_scout) for d in ds_axial]
-    return measure_scout_wed(d_scout, axial_indices[0], axial_indices[1])
+    return measure_scout_wed(d_scout, axial_indices[0], axial_indices[1], array_return)
 
 
 
