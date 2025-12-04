@@ -60,9 +60,8 @@ def unpack_tomography(fn: typing.Union[os.PathLike, str], specify_frames: typing
         filename for a tomography dicom file.
     specify_frames : typing.Optional[typing.Iterable]
         If you don't want all the slices, include the specific slices that you want to extract here.
-        Don't use the python 0 base index, use 1 for the first slice etc. to align with what the 
+        Don't use the python 0 index, use 1 for the first slice etc. to align with what the 
         typical situation where slice 1 is 1 mm above the breast support, etc.
-
 
 
     """
@@ -87,7 +86,10 @@ def unpack_tomography(fn: typing.Union[os.PathLike, str], specify_frames: typing
     for frame in frames:
         out_d.PerFrameFunctionalGroupsSequence = [d.PerFrameFunctionalGroupsSequence[frame]]
         out_d.PixelData = d.pixel_array[[frame],]
-        out_d.PixelSpacing = out_d.PerFrameFunctionalGroupsSequence[0].PixelMeasuresSequence[0].PixelSpacing
+        try:
+            out_d.PixelSpacing = out_d.PerFrameFunctionalGroupsSequence[0].PixelMeasuresSequence[0].PixelSpacing
+        except AttributeError:
+            out_d.PixelSpacing = out_d.SharedFunctionalGroupsSequence[0].PixelMeasuresSequence[0].PixelSpacing
         out_d.save_as(output_dir / f'{fn.name}_{str(frame+1).zfill(3)}.dcm')
 
 
