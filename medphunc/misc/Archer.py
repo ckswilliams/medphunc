@@ -98,10 +98,21 @@ class Archer:
         a, b, y = self.get_shielding_coefficients(material, kV)
         return calculate_transmission(a, b, y, thickness)
 
-
+    def transmission_to_shielding_table(self, transmission:pd.Series, kV:int):
+        material_results = [transmission]
+        for material in self.df_att_coeff.Material.unique():
+            result =  self.transmission_to_shielding(transmission, material, kV)
+            result = result.iloc[:,0]
+            result.name=material
+            material_results.append(result)
+        return pd.concat(material_results, axis=1)
+        
+        
+        
     def transmission_to_shielding(self, transmission, material, kV):
         a, b, y = self.get_shielding_coefficients(material, kV)
         return calculate_shielding(a, b, y, transmission)
+    
 
 
     def get_shielding_coefficients(self, material, kV):
@@ -114,6 +125,11 @@ class Archer:
         b = np.interp(kV, xp, yp[:, 1])
         y = np.interp(kV, xp, yp[:, 2])
         return a, b, y
+    
+    
+    def transmission_clipboard_to_shielding_clipboard(self, kV):
+        t = pd.read_clipboard()
+        return self.transmission_to_shielding_table(t, kV).iloc[:,1:]
 
 
 # %%
