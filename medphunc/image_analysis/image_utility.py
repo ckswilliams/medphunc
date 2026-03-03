@@ -318,8 +318,21 @@ def dcmshow(d, ax=None, window_override=None, image_number=None):
     else:
         tim = d.pixel_array
     
-    if len(tim.shape) > 2:
-        if image_number is not None:
+    if len(tim.shape) == 4:
+        # Only valid if last dimension is colour
+        if tim.shape[-1]!=3:
+            raise ValueError('dimensionality above 3 not supported')
+        elif image_number is not None:
+            tim = tim[image_number,:]
+        else:
+            # default to the middle image
+            tim = tim[tim.shape[0]//2,:]
+        
+    if len(tim.shape) == 3:
+            # Consider two possible cases for 3 dimensions. Colour channel last, or z/frame channel first.
+        if tim.shape[-1]==3:
+            pass
+        elif image_number is not None:
             tim = tim[image_number,:]
         else:
             # default to the middle image
