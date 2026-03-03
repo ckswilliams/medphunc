@@ -120,7 +120,7 @@ if default_remote:
 else:
     REMOTE = AEInfo(default='remote')
     logger.warning("MEDPHUNC-PACSDEFAULT-MY environment variable not set " +
-                   "- choosing default local AE from definition in config file")
+                   "- choosing default remote AE from definition in config file")
 assoc = None
 
 
@@ -197,11 +197,13 @@ def do_store(d):
         generator = store_assoc.send_c_store(d)
         return run_query(generator)
     except ValueError as e:
+        # Value errors are likely to occur when the context is not correct for the storage attempt. This won't happen for every SCP.
         print(e)
         store_assoc_contexts.append([d.file_meta.MediaStorageSOPClassUID,
                             d.file_meta.TransferSyntaxUID])
         ensure_store_assoc(force=True)
-        do_store(d)
+        generator = store_assoc.send_c_store(d)
+        return run_query(generator)
 
 
 
