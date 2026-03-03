@@ -23,14 +23,14 @@ from pynetdicom import StoragePresentationContexts
 
 import datetime
 import pandas as pd
-import logging
 import json
 import pathlib
 import copy
 
 import os
-# from pynetdicom import debug_logger
-# debug_logger()
+
+import logging
+logger = logging.getLogger(__name__)
 
 # %%
 import pynetdicom
@@ -47,13 +47,6 @@ else:
     StudyRootQueryRetrieveInformationModelMove = 'S'
 
 # %%
-
-logger = logging.getLogger(__name__)
-
-logger.setLevel(logging.DEBUG)
-
-if len(logger.handlers) == 0:
-    logger.addHandler(logging.StreamHandler())
 
 # Load the PACS config
 pacsconfig_path = os.environ.get('MEDPHUNC-PACSCONFIG')
@@ -90,6 +83,7 @@ class AEInfo:
         self.aet = aet
         self.address = address
         self.port = port
+        make_my_ae()
 
     def set_from_saved(self, name):
         self.set_ae_info(**NETWORK_INFO['dicom'][name])
@@ -119,7 +113,7 @@ if default_remote:
     REMOTE = AEInfo(name=default_remote)
 else:
     REMOTE = AEInfo(default='remote')
-    logger.warning("MEDPHUNC-PACSDEFAULT-MY environment variable not set " +
+    logger.info("MEDPHUNC-PACSDEFAULT-MY environment variable not set " +
                    "- choosing default remote AE from definition in config file")
 assoc = None
 
@@ -133,10 +127,15 @@ def test_assoc(assoc):
         return assoc.isAlive()
 
 
+ae = None
+
 def make_my_ae():
+    global ae
     ae = AE(MY.aet)
     ae.requested_contexts = QueryRetrievePresentationContexts
     return ae
+
+make_my_ae()
 
 
 def ensure_assoc():
@@ -152,7 +151,7 @@ def ensure_assoc():
     if test_assoc(assoc):
         return assoc
     else:
-        print('assoc failed :(')
+        logger.warning('Association failed')
         return assoc
 
 
@@ -178,15 +177,15 @@ def ensure_store_assoc(force = False):
                 return store_assoc
     except:
         pass
-    ae = AE(MY.aet)
+    store_ae = AE(MY.aet)
     for context in store_assoc_contexts:
-        ae.add_requested_context(context[0], context[1])
+        store_ae.add_requested_context(context[0], context[1])
 
     store_assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
     if test_assoc(store_assoc):
         return store_assoc
     else:
-        print('assoc failed :(')
+        logger.warning('Association failed')
         return store_assoc
 
 
@@ -198,7 +197,7 @@ def do_store(d):
         return run_query(generator)
     except ValueError as e:
         # Value errors are likely to occur when the context is not correct for the storage attempt. This won't happen for every SCP.
-        print(e)
+        logger.debug('ValueError occurred: %s, retrying with additional contexts', e)
         store_assoc_contexts.append([d.file_meta.MediaStorageSOPClassUID,
                             d.file_meta.TransferSyntaxUID])
         ensure_store_assoc(force=True)
@@ -208,9 +207,9 @@ def do_store(d):
 
 
 def do_ping():
-    ae = AE(MY.aet)
-    ae.requested_contexts = VerificationPresentationContexts
-    assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
+    ping_ae = AE(MY.aet)
+    ping_ae.requested_contexts = VerificationPresentationContexts
+    assoc = ping_ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
     if test_assoc(assoc):
         generator = assoc.send_c_echo()
         return run_query(generator)
@@ -338,92 +337,6 @@ def study_from_patient_and_fuzzy_date(patient_id, nominal_study_date,
                     'study_instance_uid': r.StudyInstanceUID[0],
                     'search_results': r.iloc[0, :]}
 
-
-# %% Basic movement functions
-
-def move_sop_instance(sop_instance_uid):
-    d = Dataset()
-    d.QueryRetrieveLevel = 'IMAGE'
-    d.SOPInstanceUID = sop_instance_uid
-    do_move(d)
-
-
-def move_sop_instance_list(sop_instance_uids):
-    for sop_instance in sop_instance_uids:
-        move_sop_instance(sop_instance)
-
-
-def move_series(series_uid):
-    d = Dataset()
-    d.QueryRetrieveLevel = 'SERIES'
-    d.SeriesInstanceUID = series_uid
-    return do_move(d)
-
-
-def move_series_list(series_uid_list):
-    for series_instance_uid in series_uid_list:
-        move_series(series_instance_uid)
-
-
-def move_study_uid(study_uid, one_per_series=False):
-    """Move a full study, one_per_series doesn't work yet"""
-    d = Dataset()
-    d.QueryRetrieveLevel = 'STUDY'
-    d.StudyInstanceUID = study_uid
-    x = do_move(d)
-    return x
-
-
-def move_accession_number(accession_number, one_per_series=True):
-    if one_per_series:
-        print('Getting metadata for study')
-        d = make_dataset('image')
-        d.AccessionNumber = accession_number
-        d.QueryRetrieveLevel = 'IMAGE'
-        x = do_find(d)
-        x = query_results_to_dataframe(x)
-        y = x.groupby('SeriesInstanceUID').SOPInstanceUID.first()
-        print('Grabbing images')
-        for sop_instance_uid in y:
-            move_sop_instance(sop_instance_uid)
-    else:
-        d = Dataset()
-        d.QueryRetrieveLevel = 'STUDY'
-        d.AccessionNumber = accession_number
-        do_move(d)
-
-
-# %% Search functions (for pacs with series/image level query restrictions)
-
-def find_series_from_study(StudyInstanceUID='', AccessionNumber='', **kwargs):
-    t = locals()
-    tt = t.pop('kwargs')
-    t = {**t, **tt}
-    d = make_dataset('study', **t)
-    x = do_find(d)
-
-    t['StudyInstanceUID'] = x[0][1].StudyInstanceUID
-
-    d = make_dataset('series', **t)
-    xx = do_find(d)
-    return xx
-
-
-def find_images_from_study(StudyInstanceUID='', AccessionNumber='', **kwargs):
-    x = find_series_from_study(StudyInstanceUID, AccessionNumber, **kwargs)
-    x = x[:-1]
-    results = []
-    for xx in x:
-        kwargs['StudyInstanceUID'] = xx[1].StudyInstanceUID
-        kwargs['SeriesInstanceUID'] = xx[1].SeriesInstanceUID
-        d = make_dataset('image', **kwargs)
-        z = do_find(d)
-        results = results + z[:-1]
-    return results
-
-
-def find_images_from_series():
-    pass
 
 
 # %% SearchSet. Create query datasets. Not for move requests.
