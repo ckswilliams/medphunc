@@ -58,7 +58,6 @@ with open(pacsconfig_path, 'r') as f:
 
 
 # %% AE wrapper class
-
 class AEInfo:
     aet = None
     address = None
@@ -83,7 +82,12 @@ class AEInfo:
         self.aet = aet
         self.address = address
         self.port = port
-        make_my_ae()
+        try:
+            make_my_ae()
+        except NameError:
+            pass
+        global assoc
+        assoc = None
 
     def set_from_saved(self, name):
         self.set_ae_info(**NETWORK_INFO['dicom'][name])
@@ -126,15 +130,12 @@ def test_assoc(assoc):
     else:
         return assoc.isAlive()
 
-
-ae = None
-
 def make_my_ae():
     global ae
     ae = AE(MY.aet)
     ae.requested_contexts = QueryRetrievePresentationContexts
     return ae
-
+ae = None
 make_my_ae()
 
 
