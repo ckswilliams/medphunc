@@ -18,6 +18,8 @@ import ssl
 
 from medphunc.pacs import pacsify as pi
 
+import logging
+logger = logging.getLogger(__name__)
 
 # %%
 
@@ -44,6 +46,7 @@ class Orthancs(pyorthanc.Orthanc):
 orthanc_config = pi.NETWORK_INFO['orthanc']
 default_orthanc = os.environ.get('MEDPHUNC-ORTHANCDEFAULT')
 if not default_orthanc:
+    logger.info('No default orthanc specified in environment variable MEDPHUNC-ORTHANCDEFAULT - using default from config file')
     default_orthanc = orthanc_config['default']
 orthanc_info = orthanc_config[default_orthanc]
 
@@ -249,6 +252,8 @@ class Thank(pi.RDSR):
         if len(ds) == 0:
             self.move(retrieve_index)
             ds = self.retrieve(retrieve_index)
+        else:
+            logger.info('Data already in orthanc - moving not performed')
         return ds
     
    
