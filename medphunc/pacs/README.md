@@ -2,6 +2,14 @@
 
 DICOM PACS query/retrieve utilities built on [pynetdicom](https://github.com/pydicom/pynetdicom), with optional [Orthanc](https://www.orthanc-server.com/) REST API support.
 
+
+## Overview
+
+In order to get the most out of these scripts, you need to run them on a computer which has a direct connection to PACS, and ideally an instance of Orthanc installed. Without this, the scripts will not be useful.
+
+Furthermore, you'll need to configure the Orthanc REST service.
+
+
 ## Contents
 
 | Module | Purpose |
