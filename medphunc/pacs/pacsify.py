@@ -23,14 +23,14 @@ from pynetdicom import StoragePresentationContexts
 
 import datetime
 import pandas as pd
-import logging
 import json
 import pathlib
 import copy
 
 import os
-# from pynetdicom import debug_logger
-# debug_logger()
+
+import logging
+logger = logging.getLogger(__name__)
 
 # %%
 import pynetdicom
@@ -48,13 +48,6 @@ else:
 
 # %%
 
-logger = logging.getLogger(__name__)
-
-logger.setLevel(logging.DEBUG)
-
-if len(logger.handlers) == 0:
-    logger.addHandler(logging.StreamHandler())
-
 # Load the PACS config
 pacsconfig_path = os.environ.get('MEDPHUNC-PACSCONFIG')
 if not pacsconfig_path:
@@ -65,7 +58,6 @@ with open(pacsconfig_path, 'r') as f:
 
 
 # %% AE wrapper class
-
 class AEInfo:
     aet = None
     address = None
@@ -90,6 +82,12 @@ class AEInfo:
         self.aet = aet
         self.address = address
         self.port = port
+        try:
+            make_my_ae()
+        except NameError:
+            pass
+        global assoc
+        assoc = None
 
     def set_from_saved(self, name):
         self.set_ae_info(**NETWORK_INFO['dicom'][name])
@@ -119,8 +117,8 @@ if default_remote:
     REMOTE = AEInfo(name=default_remote)
 else:
     REMOTE = AEInfo(default='remote')
-    logger.warning("MEDPHUNC-PACSDEFAULT-MY environment variable not set " +
-                   "- choosing default local AE from definition in config file")
+    logger.info("MEDPHUNC-PACSDEFAULT-MY environment variable not set " +
+                   "- choosing default remote AE from definition in config file")
 assoc = None
 
 
@@ -132,11 +130,13 @@ def test_assoc(assoc):
     else:
         return assoc.isAlive()
 
-
 def make_my_ae():
+    global ae
     ae = AE(MY.aet)
     ae.requested_contexts = QueryRetrievePresentationContexts
     return ae
+ae = None
+make_my_ae()
 
 
 def ensure_assoc():
@@ -152,7 +152,7 @@ def ensure_assoc():
     if test_assoc(assoc):
         return assoc
     else:
-        print('assoc failed :(')
+        logger.warning('Association failed')
         return assoc
 
 
@@ -178,15 +178,15 @@ def ensure_store_assoc(force = False):
                 return store_assoc
     except:
         pass
-    ae = AE(MY.aet)
+    store_ae = AE(MY.aet)
     for context in store_assoc_contexts:
-        ae.add_requested_context(context[0], context[1])
+        store_ae.add_requested_context(context[0], context[1])
 
     store_assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
     if test_assoc(store_assoc):
         return store_assoc
     else:
-        print('assoc failed :(')
+        logger.warning('Association failed')
         return store_assoc
 
 
@@ -197,18 +197,20 @@ def do_store(d):
         generator = store_assoc.send_c_store(d)
         return run_query(generator)
     except ValueError as e:
-        print(e)
+        # Value errors are likely to occur when the context is not correct for the storage attempt. This won't happen for every SCP.
+        logger.debug('ValueError occurred: %s, retrying with additional contexts', e)
         store_assoc_contexts.append([d.file_meta.MediaStorageSOPClassUID,
                             d.file_meta.TransferSyntaxUID])
         ensure_store_assoc(force=True)
-        do_store(d)
+        generator = store_assoc.send_c_store(d)
+        return run_query(generator)
 
 
 
 def do_ping():
-    ae = AE(MY.aet)
-    ae.requested_contexts = VerificationPresentationContexts
-    assoc = ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
+    ping_ae = AE(MY.aet)
+    ping_ae.requested_contexts = VerificationPresentationContexts
+    assoc = ping_ae.associate(REMOTE.address, REMOTE.port, ae_title=REMOTE.aet, max_pdu=32764)
     if test_assoc(assoc):
         generator = assoc.send_c_echo()
         return run_query(generator)
@@ -336,92 +338,6 @@ def study_from_patient_and_fuzzy_date(patient_id, nominal_study_date,
                     'study_instance_uid': r.StudyInstanceUID[0],
                     'search_results': r.iloc[0, :]}
 
-
-# %% Basic movement functions
-
-def move_sop_instance(sop_instance_uid):
-    d = Dataset()
-    d.QueryRetrieveLevel = 'IMAGE'
-    d.SOPInstanceUID = sop_instance_uid
-    do_move(d)
-
-
-def move_sop_instance_list(sop_instance_uids):
-    for sop_instance in sop_instance_uids:
-        move_sop_instance(sop_instance)
-
-
-def move_series(series_uid):
-    d = Dataset()
-    d.QueryRetrieveLevel = 'SERIES'
-    d.SeriesInstanceUID = series_uid
-    return do_move(d)
-
-
-def move_series_list(series_uid_list):
-    for series_instance_uid in series_uid_list:
-        move_series(series_instance_uid)
-
-
-def move_study_uid(study_uid, one_per_series=False):
-    """Move a full study, one_per_series doesn't work yet"""
-    d = Dataset()
-    d.QueryRetrieveLevel = 'STUDY'
-    d.StudyInstanceUID = study_uid
-    x = do_move(d)
-    return x
-
-
-def move_accession_number(accession_number, one_per_series=True):
-    if one_per_series:
-        print('Getting metadata for study')
-        d = make_dataset('image')
-        d.AccessionNumber = accession_number
-        d.QueryRetrieveLevel = 'IMAGE'
-        x = do_find(d)
-        x = query_results_to_dataframe(x)
-        y = x.groupby('SeriesInstanceUID').SOPInstanceUID.first()
-        print('Grabbing images')
-        for sop_instance_uid in y:
-            move_sop_instance(sop_instance_uid)
-    else:
-        d = Dataset()
-        d.QueryRetrieveLevel = 'STUDY'
-        d.AccessionNumber = accession_number
-        do_move(d)
-
-
-# %% Search functions (for pacs with series/image level query restrictions)
-
-def find_series_from_study(StudyInstanceUID='', AccessionNumber='', **kwargs):
-    t = locals()
-    tt = t.pop('kwargs')
-    t = {**t, **tt}
-    d = make_dataset('study', **t)
-    x = do_find(d)
-
-    t['StudyInstanceUID'] = x[0][1].StudyInstanceUID
-
-    d = make_dataset('series', **t)
-    xx = do_find(d)
-    return xx
-
-
-def find_images_from_study(StudyInstanceUID='', AccessionNumber='', **kwargs):
-    x = find_series_from_study(StudyInstanceUID, AccessionNumber, **kwargs)
-    x = x[:-1]
-    results = []
-    for xx in x:
-        kwargs['StudyInstanceUID'] = xx[1].StudyInstanceUID
-        kwargs['SeriesInstanceUID'] = xx[1].SeriesInstanceUID
-        d = make_dataset('image', **kwargs)
-        z = do_find(d)
-        results = results + z[:-1]
-    return results
-
-
-def find_images_from_series():
-    pass
 
 
 # %% SearchSet. Create query datasets. Not for move requests.
@@ -645,105 +561,6 @@ class SearchSet(pydicom.Dataset):
             raise(ValueError('Need to supply one of study_instance_uid or accession_number'))
 
 
-# %% Deprecated dataset functions
-
-def write_tag_by_keyword(d, keyword, value):
-    """Deprecated function"""
-    logger.warning("The write tag by keyword function is deprecated. Please remove it from any script")
-    tag = pydicom.datadict.tag_for_keyword(keyword)
-    # ttag = pydicom.tag.Tag('StudyInstanceUID')
-    ddat = pydicom.datadict.DicomDictionary[tag]
-    d.add_new(tag, ddat[0], value)
-    return d
-
-
-def make_dataset(query_level='series', **kwargs):
-    """Deprecated function"""
-    logger.warning("The make_dataset function is deprecated. Please remove it from any script")
-    query_level = query_level.lower()
-    if query_level == 'study':
-        d = Dataset()
-        d.QueryRetrieveLevel = 'STUDY'
-        d.StudyDate = ''
-        # Required
-        d.StudyInstanceUID = ''
-        # Optional
-        d.PatientName = ''
-        d.PatientID = ''
-        d.AccessionNumber = ''
-        d.StudyDescription = ''
-        d.StudyID = ''
-        d.StudyTime = ''
-        d.StudyInstanceUID = ''
-        d.NumberOfStudyRelatedSeries = ''
-        d.StationName = ''
-        d.SpecificCharacterSet = ''
-        d.ModalitiesInStudy = ''
-        d.Manufacturer = ''
-        d.ManufacturerModelName = ''
-        d.InstitutionName = ''
-
-    elif query_level == 'series':
-        d = Dataset()
-        d.QueryRetrieveLevel = 'SERIES'
-        d.SeriesDescription = ''
-        d.SeriesNumber = ''
-        d.SeriesInstanceUID = ''
-        d.Modality = ''
-        d.NumberOfSeriesRelatedInstances = ''
-        d.StationName = ''
-        d.SpecificCharacterSet = ''
-        d.SeriesDate = ''
-        d.AccessionNumber = ''
-        d.SeriesTime = ''
-        d.Manufacturer = ''
-        d.ManufacturerModelName = ''
-        d.SOPClassUID = ''
-
-    elif query_level == 'image':
-        d = Dataset()
-        d.QueryRetrieveLevel = "IMAGE"
-        # Required
-        d.SeriesInstanceUID = ''
-        # Optional
-        d.StudyInstanceUID = ''
-        d.SOPInstanceUID = ''
-        d.AccessionNumber = ''
-        d.StationName = ''
-        d.SeriesDate = ''
-        d.SeriesTime = ''
-        d.SOPClassUID = ''
-        d.InstanceNumber = ''
-        d.SpecificCharacterSet = ''
-        d.StudyInstanceUID = ''
-
-    elif query_level == 'patient':  # todo find optional tags
-        d = Dataset()
-        d.QueryRetrieveLevel = 'PATIENT'
-        d.PatientName = ''
-        d.PatientSex = ''
-        d.PatientID = ''
-        d.AccessionNumber = ''
-    else:
-        raise(NotImplementedError('The selected query level does not exist %s', query_level))
-    for k, v in kwargs.items():
-        try:
-            d = write_tag_by_keyword(d, k, v)
-        except:
-            print(f'could not write tag: "{k}" with value: {v}')
-
-    return d
-
-    @classmethod
-    def from_accession(cls, accession_number):
-        return cls('study', AccessionNumber=accession_number)
-
-    @classmethod
-    def from_study_uid(cls, study_uid):
-        return cls('study', StudyInstanceUID=study_uid)
-    
-
-
 # %% RDSR functions
 class RDSR(SearchSet):
     """
@@ -819,72 +636,6 @@ class RDSR(SearchSet):
         
 
 
-class Multilevel:
-    """
-    Not sure what this class is for. I don't think anything uses it, but not completely sure
-
-    %todo the useful parts of this should be made more accessable
-    """
-
-    @staticmethod
-    def get_rdsr_sop_uids_from_query_results(query_results):
-        if len(query_results) == 1:
-            return []
-        df = query_results_to_dataframe(query_results)
-        tdf = df[df.SOPClassUID == '1.2.840.10008.5.1.4.1.1.88.67']
-        if tdf.shape[0] > 0:
-            return tdf.SOPInstanceUID.tolist()
-        else:
-            return []
-
-    @staticmethod
-    def retrieve_rdsr_from_query_results(query_results):
-        sop_uids = Multilevel.get_rdsr_sop_uids_from_query_results(query_results)
-        logger.info('Found {} RDSR SOP UIDs'.format(len(sop_uids)))
-        move_sop_instance_list(sop_uids)
-        return sop_uids
-
-    @staticmethod
-    def retrieve_rdsr_sop_uids_from_study(study_instance_uid):
-        d = make_dataset('image')
-        d.StudyInstanceUID = study_instance_uid
-        d.Modality = 'SR'
-        x = do_find(d)
-        logger.info('Found {} items which might be RDSRs'.format(len(x) - 1))
-        sop_uids = Multilevel.get_rdsr_sop_uids_from_query_results(x)
-        return sop_uids
-
-    @staticmethod
-    def retrieve_rdsr_from_study(study_instance_uid):
-
-        d = make_dataset('image')
-        d.StudyInstanceUID = study_instance_uid
-        d.Modality = 'SR'
-        x = do_find(d)
-        sop_uids = Multilevel.retrieve_rdsr_from_query_results(x)
-        return sop_uids
-
-    @staticmethod
-    def retrieve_rdsr_from_accession(accession_number):
-        d = make_dataset('image')
-        d.AccessionNumber = str(accession_number)
-        d.Modality = 'SR'
-        x = do_find(d)
-        sop_uids = Multilevel.retrieve_rdsr_from_query_results(x)
-        return sop_uids
-
-    @staticmethod
-    def search_retrieve_rdsr(date_range, station_filter=''):
-        d = make_dataset('image')
-        d.StudyDate = date_range
-        d.StationName = station_filter
-        d.Modality = 'SR'
-        x = do_find(d)
-        logger.info('Found {} items which might be RDSRs'.format(len(x) - 1))
-        sop_uids = Multilevel.retrieve_rdsr_from_query_results(x)
-        return x, sop_uids
-
-
 def make_daterange(start_date, window=5):
     """Make a dicom-friendly date range from a datetime object, over the specified duration"""
     window = datetime.timedelta(days=window)
@@ -921,71 +672,6 @@ def query_results_to_dataframe(ds):
         s.append(d)
     df = pd.DataFrame(s)
     return df
-
-
-# %% General scripts
-
-
-# %% II related scripts
-# This stuff should be separated out into another script or similar
-
-def get_ii_data(date_range, station_filter):
-    df = query_ii_study_list(date_range, station_filter)
-    move_list = query_ii_dose_capture_uid(df)
-    move_series_list(move_list)
-
-
-# This script finds philips and hologic secondary captures by using some wacky science
-def get_secondary_captures(df):
-    # Philips BV and Veradius filter
-    philips = df.loc[df.Manufacturer.str.contains('Philips'), :]
-    philips = philips.loc[philips.SeriesNumber == 0, :]
-
-    # Hologic Fluoroscan Insight filter
-    hologic = df.loc[df.Manufacturer.str.contains('Hologic'), :]
-    hologic = hologic.loc[hologic.SeriesTime == '']
-    hologic = hologic.loc[hologic.Modality == 'RF']
-    return pd.concat([philips, hologic])
-
-
-# Queries PACS and retrieves dataframe containing studies that meet the supplied
-# filters
-def query_ii_study_list(date_range, station_filter):
-    dfs = []
-    for m in ['OT', 'RF']:
-        d = make_dataset('study')
-        d.ModalitiesInStudy = [m]
-        d.StudyDate = date_range
-        d.StationName = station_filter
-        d.StudyDescription = 'II*'
-
-        f = do_find(d)
-        dfs.append(query_results_to_dataframe(f))
-
-    df = pd.concat(dfs)
-    df = df.drop_duplicates('StudyInstanceUID')
-    print('Found {} studies in the time period {}'.format(df.shape[0], date_range))
-    return df
-
-
-# Takes a dataframe containing studies, queries on a series level to find
-# secondary captures, then moves them to the local AE
-def query_ii_dose_capture_uid(df):
-    query_list = []
-    for i, r in df.iterrows():
-        d = make_dataset('series')
-        d.StudyInstanceUID = r.StudyInstanceUID
-        ff = do_find(d)
-        ddf = query_results_to_dataframe(ff)
-        try:
-            cdf = get_secondary_captures(ddf)
-        except:
-            print('skipping study {}'.format(r.SeriesInstanceUID))
-            continue
-        query_list = query_list + list(cdf.SeriesInstanceUID.unique())
-    query_list = pd.Series(query_list).unique()
-    print('Finished looking for dose capture uids, found {} series'.format(len(query_list)))
-    return query_list
 
 
 # %%
